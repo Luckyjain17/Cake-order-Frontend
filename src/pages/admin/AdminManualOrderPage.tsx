@@ -1,0 +1,173 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import api from '@/lib/api'
+import toast from 'react-hot-toast'
+import { motion } from 'framer-motion'
+
+const SOURCES = ['whatsapp', 'phone', 'walkin', 'instagram', 'facebook', 'other']
+
+const blank = {
+  customer_name: '', mobile_number: '', address: '',
+  cake_name: '', quantity: '1', amount: '',
+  _unit_price: '',
+  order_source: 'whatsapp', payment_status: 'pending',
+  status: 'new', notes: '', delivery_date: '',
+}
+
+export default function AdminManualOrderPage() {
+  const [form, setForm] = useState<any>(blank)
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setForm((f: any) => ({ ...f, [k]: e.target.value }))
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _unit_price, ...payload } = form
+      await api.post('/orders/manual', {
+        ...payload,
+        quantity: parseInt(form.quantity) || 1,
+        amount: Math.round(parseFloat(form.amount) || 0),  // integer, no float drift
+      })
+      toast.success('Manual order created!')
+      navigate('/admin/orders')
+    } catch {
+      toast.error('Failed to create order')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="p-4 pb-8 max-w-lg mx-auto space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-2xl font-bold text-gray-900">Manual Order</h1>
+        <button onClick={() => navigate('/admin/orders')} className="btn-ghost">Cancel</button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="card p-4 space-y-4">
+          <h2 className="font-semibold text-gray-700">Order Source</h2>
+          <div className="flex flex-wrap gap-2">
+            {SOURCES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setForm((f: any) => ({ ...f, order_source: s }))}
+                className={`px-4 py-2 rounded-xl border-2 text-sm font-semibold capitalize transition-all ${
+                  form.order_source === s ? 'border-primary-500 bg-primary-50 text-primary-500' : 'border-gray-200 text-gray-600'
+                }`}
+              >
+                {s === 'whatsapp' ? '💬' : s === 'phone' ? '📞' : s === 'walkin' ? '🚶' : s === 'instagram' ? '📸' : s === 'facebook' ? '📘' : '📌'} {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="card p-4 space-y-4">
+          <h2 className="font-semibold text-gray-700">Customer Info</h2>
+          <div>
+            <label className="label">Customer Name *</label>
+            <input className="input" value={form.customer_name} onChange={set('customer_name')} required />
+          </div>
+          <div>
+            <label className="label">Mobile Number *</label>
+            <input className="input" type="tel" value={form.mobile_number} onChange={set('mobile_number')} required />
+          </div>
+        </div>
+
+        <div className="card p-4 space-y-4">
+          <h2 className="font-semibold text-gray-700">Order Details</h2>
+          <div>
+            <label className="label">Cake Name *</label>
+            <input className="input" value={form.cake_name} onChange={set('cake_name')} placeholder="e.g. Chocolate Birthday Cake 1kg" required />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="label">Price/Unit (₹) *</label>
+              <input
+                className="input"
+                type="number"
+                min={0}
+                step={1}
+                placeholder="Per cake"
+                value={form._unit_price}
+                onChange={(e) => {
+                  const unit = Math.round(parseFloat(e.target.value) || 0)
+                  const qty = parseInt(form.quantity) || 1
+                  setForm((f: any) => ({ ...f, _unit_price: e.target.value, amount: String(unit * qty) }))
+                }}
+                required
+              />
+            </div>
+            <div>
+              <label className="label">Quantity</label>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                step={1}
+                value={form.quantity}
+                onChange={(e) => {
+                  const qty = parseInt(e.target.value) || 1
+                  const unit = Math.round(parseFloat(form._unit_price) || 0)
+                  setForm((f: any) => ({ ...f, quantity: e.target.value, amount: String(unit * qty) }))
+                }}
+              />
+            </div>
+            <div>
+              <label className="label">Total (₹)</label>
+              <input
+                className="input bg-gray-50 font-bold text-primary-600"
+                type="number"
+                value={form.amount}
+                onChange={(e) => setForm((f: any) => ({ ...f, amount: e.target.value }))}
+                placeholder="Auto-filled"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="label">Delivery Date</label>
+            <input className="input" type="date" value={form.delivery_date} onChange={set('delivery_date')} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Payment</label>
+              <select className="input" value={form.payment_status} onChange={set('payment_status')}>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="partial">Partial</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Status</label>
+              <select className="input" value={form.status} onChange={set('status')}>
+                <option value="new">New</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="processing">Processing</option>
+                <option value="ready">Ready</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="label">Notes</label>
+            <textarea className="input resize-none" rows={2} value={form.notes} onChange={set('notes')} placeholder="Any special notes…" />
+          </div>
+        </div>
+
+        <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.97 }} className="btn-primary w-full py-4 text-base">
+          {loading ? 'Saving…' : 'Create Manual Order'}
+        </motion.button>
+      </form>
+    </div>
+  )
+}
