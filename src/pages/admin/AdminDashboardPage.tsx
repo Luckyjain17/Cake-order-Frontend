@@ -4,15 +4,20 @@ import api from '@/lib/api'
 import type { DashboardStats } from '@/types'
 import { ShoppingBag, IndianRupee, Calendar } from 'lucide-react'
 
+function getLocalYMD(date: Date = new Date()): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function AdminDashboardPage() {
   const [startDate, setStartDate] = useState<string>(() => {
     const d = new Date()
     d.setDate(1) // First day of current month
-    return d.toISOString().split('T')[0]
+    return getLocalYMD(d)
   })
-  const [endDate, setEndDate] = useState<string>(
-    () => new Date().toISOString().split('T')[0]
-  )
+  const [endDate, setEndDate] = useState<string>(() => getLocalYMD())
 
   // General dashboard stats
   const { data: stats, isLoading: loadStats } = useQuery<DashboardStats>({
@@ -54,16 +59,26 @@ export default function AdminDashboardPage() {
     0
   )
 
-  // ✅ Revenue = sum of all currently loaded order amounts in the list
+  // ✅ Revenue = sum of all currently loaded paid order amounts in the list
   const rangeRevenue = dateOrders.reduce(
-    (sum: number, order: any) => sum + (Number(order.amount) || 0),
+    (sum: number, order: any) => sum + (order.payment_status === 'paid' ? (Number(order.amount) || 0) : 0),
     0
   )
 
-  // Pending manual orders in range (payment_status is pending)
+  // Pending manual orders in range (payment_status is pending or half)
   const pendingOrdersCount = dateOrders.filter(
-    (order: any) => order.payment_status === 'pending'
+    (order: any) => order.payment_status === 'pending' || order.payment_status === 'half'
   ).length
+
+  // Pending revenue: 100% of pending amount, 50% of half payment amount
+  const pendingRevenue = dateOrders.reduce((sum: number, order: any) => {
+    if (order.payment_status === 'pending') {
+      return sum + (Number(order.amount) || 0)
+    } else if (order.payment_status === 'half') {
+      return sum + ((Number(order.amount) || 0) / 2)
+    }
+    return sum
+  }, 0)
 
   // Infinite scroll sentinel for orders list
   const ordersLoaderRef = useRef<HTMLDivElement>(null)
@@ -126,7 +141,7 @@ export default function AdminDashboardPage() {
               className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-semibold text-gray-800 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
               value={endDate}
               min={startDate}
-              max={new Date().toISOString().split('T')[0]}
+              max={getLocalYMD()}
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
@@ -155,7 +170,10 @@ export default function AdminDashboardPage() {
 
         {/* Pending Orders Card */}
         <div className="card p-3 bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-soft relative overflow-hidden flex flex-col justify-between min-h-[96px]">
-          <p className="text-2xl font-extrabold">{pendingOrdersCount}</p>
+          <div>
+            <p className="text-xl font-extrabold">₹{pendingRevenue.toLocaleString()}</p>
+            <p className="text-[9px] font-semibold opacity-90 mt-0.5">{pendingOrdersCount} pending</p>
+          </div>
           <p className="text-[9px] font-bold uppercase tracking-wider opacity-90">Pending</p>
         </div>
       </div>

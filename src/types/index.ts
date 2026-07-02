@@ -121,6 +121,7 @@ export interface ManualOrder {
   address?: string
   cake_name: string
   quantity: number
+  weight?: string
   amount: number
   order_source: string
   payment_status: string

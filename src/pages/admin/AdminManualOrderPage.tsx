@@ -8,7 +8,7 @@ const SOURCES = ['whatsapp', 'phone', 'walkin', 'instagram', 'facebook', 'other'
 
 const blank = {
   customer_name: '', mobile_number: '', address: '',
-  cake_name: '', quantity: '1', amount: '',
+  cake_name: '', quantity: '1', weight: '1kg', amount: '',
   _unit_price: '',
   order_source: 'whatsapp', payment_status: 'pending',
   status: 'new', notes: '', delivery_date: '',
@@ -120,7 +120,32 @@ export default function AdminManualOrderPage() {
           <h2 className="font-semibold text-gray-700">Order Details</h2>
           <div>
             <label className="label">Cake Name *</label>
-            <input className="input" value={form.cake_name} onChange={set('cake_name')} placeholder="e.g. Chocolate Birthday Cake 1kg" required />
+            <input className="input" value={form.cake_name} onChange={set('cake_name')} placeholder="e.g. Chocolate Birthday Cake" required />
+          </div>
+
+          <div>
+            <label className="label">Weight</label>
+            <select
+              className="input font-semibold"
+              value={form.weight || '1kg'}
+              onChange={(e) => setForm((f: any) => ({ ...f, weight: e.target.value }))}
+            >
+              <option value="500g">500g</option>
+              <option value="1kg">1kg</option>
+              <option value="1.5kg">1.5kg</option>
+              <option value="2kg">2kg</option>
+              <option value="2.5kg">2.5kg</option>
+              <option value="3kg">3kg</option>
+              <option value="3.5kg">3.5kg</option>
+              <option value="4kg">4kg</option>
+              <option value="4.5kg">4.5kg</option>
+              <option value="5kg">5kg</option>
+              <option value="6kg">6kg</option>
+              <option value="7kg">7kg</option>
+              <option value="8kg">8kg</option>
+              <option value="9kg">9kg</option>
+              <option value="10kg">10kg</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-3 gap-3">

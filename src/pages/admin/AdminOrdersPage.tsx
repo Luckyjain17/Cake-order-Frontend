@@ -11,10 +11,11 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [sourceFilter, setSourceFilter] = useState('')
   const [paymentFilter, setPaymentFilter] = useState('')
+  const [weightFilter, setWeightFilter] = useState('')
   const qc = useQueryClient()
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ['manualOrders', search, statusFilter, sourceFilter, paymentFilter],
+    queryKey: ['manualOrders', search, statusFilter, sourceFilter, paymentFilter, weightFilter],
     queryFn: ({ pageParam = 1 }) =>
       api.get('/orders/manual/all', {
         params: {
@@ -24,6 +25,7 @@ export default function AdminOrdersPage() {
           status: statusFilter || undefined,
           order_source: sourceFilter || undefined,
           payment_status: paymentFilter || undefined,
+          weight: weightFilter || undefined,
         },
       }).then((r) => r.data),
     getNextPageParam: (last: any) => (last.page < last.pages ? last.page + 1 : undefined),
@@ -73,21 +75,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Filter Selects */}
-      <div className="grid grid-cols-3 gap-2">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
-        >
-          <option value="">All Statuses</option>
-          <option value="new">New</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="processing">Processing</option>
-          <option value="ready">Ready</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        
+      <div className="grid grid-cols-2 gap-2">
         <select
           value={sourceFilter}
           onChange={(e) => setSourceFilter(e.target.value)}
@@ -112,6 +100,43 @@ export default function AdminOrdersPage() {
           <option value="paid">Paid</option>
           <option value="half">Half Payment</option>
         </select>
+
+        <select
+          value={weightFilter}
+          onChange={(e) => setWeightFilter(e.target.value)}
+          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
+        >
+          <option value="">All Weights</option>
+          <option value="500g">500g</option>
+          <option value="1kg">1kg</option>
+          <option value="1.5kg">1.5kg</option>
+          <option value="2kg">2kg</option>
+          <option value="2.5kg">2.5kg</option>
+          <option value="3kg">3kg</option>
+          <option value="3.5kg">3.5kg</option>
+          <option value="4kg">4kg</option>
+          <option value="4.5kg">4.5kg</option>
+          <option value="5kg">5kg</option>
+          <option value="6kg">6kg</option>
+          <option value="7kg">7kg</option>
+          <option value="8kg">8kg</option>
+          <option value="9kg">9kg</option>
+          <option value="10kg">10kg</option>
+        </select>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
+        >
+          <option value="">All Statuses</option>
+          <option value="new">New</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="processing">Processing</option>
+          <option value="ready">Ready</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
       </div>
 
       {/* Orders List */}
@@ -132,78 +157,77 @@ export default function AdminOrdersPage() {
           </div>
         ) : (
           orders.map((order) => (
-          <div key={order.id} className="card p-4 space-y-3 border border-gray-100 shadow-sm">
-            {/* Header: Order Number */}
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-sm text-gray-900">#{order.order_number}</span>
-            </div>
-
-            {/* Customer Details */}
-            <div className="text-sm border-b border-gray-50 pb-2">
+            <div key={order.id} className="card p-4 space-y-3 border border-gray-100 shadow-sm">
+              {/* Header: Order Number */}
               <div className="flex items-center justify-between">
-                <p className="font-semibold text-gray-800">{order.customer_name}</p>
-                <a
-                  href={`tel:${order.mobile_number}`}
-                  className="flex items-center gap-1 text-xs text-primary-500 font-bold bg-primary-50 px-2.5 py-1 rounded-xl"
-                >
-                  <Phone size={11} /> Call
-                </a>
+                <span className="font-bold text-sm text-gray-900">#{order.order_number}</span>
               </div>
-              <p className="text-gray-400 text-xs mt-0.5">{order.mobile_number}</p>
-              {order.address && (
-                <p className="text-gray-500 text-xs mt-1 bg-gray-50 p-2 rounded-xl border border-gray-100">{order.address}</p>
-              )}
-            </div>
 
-            {/* Product Details */}
-            <div className="flex justify-between items-baseline text-sm bg-pink-50/20 p-2.5 rounded-2xl">
-              <span className="text-gray-700 font-medium">{order.cake_name} <span className="text-xs text-gray-400 font-normal">× {order.quantity}</span></span>
-              <span className="font-bold text-primary-600">₹{order.amount.toLocaleString()}</span>
-            </div>
+              {/* Customer Details */}
+              <div className="text-sm border-b border-gray-50 pb-2">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-gray-800">{order.customer_name}</p>
+                  <a
+                    href={`tel:${order.mobile_number}`}
+                    className="flex items-center gap-1 text-xs text-primary-500 font-bold bg-primary-50 px-2.5 py-1 rounded-xl"
+                  >
+                    <Phone size={11} /> Call
+                  </a>
+                </div>
+                <p className="text-gray-400 text-xs mt-0.5">{order.mobile_number}</p>
+                {order.address && (
+                  <p className="text-gray-500 text-xs mt-1 bg-gray-50 p-2 rounded-xl border border-gray-100">{order.address}</p>
+                )}
+              </div>
 
-            {/* Meta Details: Source, Date */}
-            <div className="flex justify-between items-center text-xs text-gray-400">
-              <div className="flex items-center gap-1.5">
-                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-lg capitalize">{order.order_source}</span>
-                <span className={`px-2 py-0.5 rounded-lg font-bold text-[9px] uppercase tracking-wider border ${
-                  order.payment_status === 'paid'
+              {/* Product Details */}
+              <div className="flex justify-between items-baseline text-sm bg-pink-50/20 p-2.5 rounded-2xl">
+                <span className="text-gray-700 font-medium">{order.cake_name} <span className="text-xs text-gray-400 font-normal">({order.weight || '1kg'}) × {order.quantity}</span></span>
+                <span className="font-bold text-primary-600">₹{order.amount.toLocaleString()}</span>
+              </div>
+
+              {/* Meta Details: Source, Date */}
+              <div className="flex justify-between items-center text-xs text-gray-400">
+                <div className="flex items-center gap-1.5">
+                  <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-lg capitalize">{order.order_source}</span>
+                  <span className={`px-2 py-0.5 rounded-lg font-bold text-[9px] uppercase tracking-wider border ${order.payment_status === 'paid'
                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                     : order.payment_status === 'half'
-                    ? 'bg-blue-50 text-blue-600 border-blue-100'
-                    : 'bg-amber-50 text-amber-600 border-amber-100'
-                }`}>
-                  {order.payment_status === 'half' ? 'Half Payment' : order.payment_status}
-                </span>
+                      ? 'bg-blue-50 text-blue-600 border-blue-100'
+                      : 'bg-amber-50 text-amber-600 border-amber-100'
+                    }`}>
+                    {order.payment_status === 'half' ? 'Half Payment' : order.payment_status}
+                  </span>
+                </div>
+                {order.delivery_date && <span>📅 {order.delivery_date}</span>}
               </div>
-              {order.delivery_date && <span>📅 {order.delivery_date}</span>}
-            </div>
 
-            {/* Action Bar */}
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
-              {/* Edit Button */}
-              <Link
-                to={`/admin/orders/edit/${order.id}`}
-                className="py-2 rounded-xl bg-gray-50 text-gray-700 hover:bg-gray-100 flex items-center justify-center gap-1.5 transition-colors text-xs font-bold"
-                title="Edit Order"
-              >
-                <Edit2 size={14} /> Edit Order
-              </Link>
-              {/* Delete Button */}
-              <button
-                onClick={() => handleDelete(order.id, order.order_number)}
-                className="py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center gap-1.5 transition-colors text-xs font-bold"
-                title="Delete Order"
-              >
-                <Trash2 size={14} /> Delete Order
-              </button>
-            </div>
+              {/* Action Bar */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
+                {/* Edit Button */}
+                <Link
+                  to={`/admin/orders/edit/${order.id}`}
+                  className="py-2 rounded-xl bg-gray-50 text-gray-700 hover:bg-gray-100 flex items-center justify-center gap-1.5 transition-colors text-xs font-bold"
+                  title="Edit Order"
+                >
+                  <Edit2 size={14} /> Edit Order
+                </Link>
+                {/* Delete Button */}
+                <button
+                  onClick={() => handleDelete(order.id, order.order_number)}
+                  className="py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center gap-1.5 transition-colors text-xs font-bold"
+                  title="Delete Order"
+                >
+                  <Trash2 size={14} /> Delete Order
+                </button>
+              </div>
 
-            {order.notes && (
-              <p className="text-xs text-gray-500 bg-amber-50/50 border border-amber-100 rounded-xl px-3 py-2">
-                📝 {order.notes}
-              </p>
-            )}
-          </div>
+              {order.notes && (
+                <p className="text-xs text-gray-500 bg-amber-50/50 border border-amber-100 rounded-xl px-3 py-2">
+                  📝 {order.notes}
+                </p>
+              )}
+            </div>
           ))
         )}
       </div>
