@@ -315,7 +315,8 @@ export default function AdminProductFormPage() {
 
   const clearLocalFiles = () => {
     images.forEach((img) => {
-      if (typeof img.id === 'string' && img.id.startsWith('local-')) {
+      const imgId = img.id as any
+      if (typeof imgId === 'string' && imgId.startsWith('local-')) {
         URL.revokeObjectURL(img.url)
       }
     })
@@ -371,8 +372,11 @@ export default function AdminProductFormPage() {
         if (localFiles.length > 0 && newProduct?.id) {
           const formData = new FormData()
           const sortedLocalFiles = images
-            .filter((img) => typeof img.id === 'string' && img.id.startsWith('local-'))
-            .map((img) => localFiles.find((lf) => lf.id === img.id)?.file)
+            .filter((img) => {
+              const imgId = img.id as any
+              return typeof imgId === 'string' && imgId.startsWith('local-')
+            })
+            .map((img) => localFiles.find((lf) => lf.id === (img.id as any))?.file)
             .filter((file): file is File => !!file)
             
           sortedLocalFiles.forEach((file) => {
@@ -385,10 +389,13 @@ export default function AdminProductFormPage() {
           })
           
           const firstImage = images[0]
-          if (firstImage && typeof firstImage.id === 'string' && firstImage.id.startsWith('local-')) {
-            const firstUploaded = uploadedImages[0]
-            if (firstUploaded) {
-              await api.patch(`/images/${firstUploaded.id}/set-cover`).catch(() => {})
+          if (firstImage) {
+            const firstImgId = firstImage.id as any
+            if (typeof firstImgId === 'string' && firstImgId.startsWith('local-')) {
+              const firstUploaded = uploadedImages[0]
+              if (firstUploaded) {
+                await api.patch(`/images/${firstUploaded.id}/set-cover`).catch(() => {})
+              }
             }
           }
         }

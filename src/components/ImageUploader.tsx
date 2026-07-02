@@ -166,11 +166,11 @@ export default function ImageUploader({ productId, images, onImagesChange, local
 
   const handleDelete = async (imageId: any) => {
     if (typeof imageId === 'string' && imageId.startsWith('local-')) {
-      const img = images.find((i) => i.id === imageId)
+      const img = images.find((i) => (i.id as any) === imageId)
       if (img) {
         URL.revokeObjectURL(img.url)
       }
-      onImagesChange(images.filter((i) => i.id !== imageId))
+      onImagesChange(images.filter((i) => (i.id as any) !== imageId))
       if (onLocalFilesChange && localFiles) {
         onLocalFilesChange(localFiles.filter((f) => f.id !== imageId))
       }
@@ -189,7 +189,7 @@ export default function ImageUploader({ productId, images, onImagesChange, local
 
   const handleSetCover = async (imageId: any) => {
     if (typeof imageId === 'string' && imageId.startsWith('local-')) {
-      onImagesChange(images.map((i) => ({ ...i, is_cover: i.id === imageId })))
+      onImagesChange(images.map((i) => ({ ...i, is_cover: (i.id as any) === imageId })))
       toast.success('Cover image updated')
       return
     }
