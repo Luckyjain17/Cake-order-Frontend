@@ -111,12 +111,13 @@ export default function ImageUploader({ productId, images, onImagesChange, local
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
+  // Drop down
   const onDrop = useCallback(
     async (files: File[]) => {
       if (!productId) {
         const newImages: ProductImage[] = []
         const newLocalFiles: { id: string; file: File }[] = []
-        
+
         files.forEach((file) => {
           const fakeId = `local-${Math.random().toString(36).substr(2, 9)}`
           const url = URL.createObjectURL(file)
@@ -130,7 +131,7 @@ export default function ImageUploader({ productId, images, onImagesChange, local
           })
           newLocalFiles.push({ id: fakeId, file })
         })
-        
+
         onImagesChange([...images, ...newImages])
         if (onLocalFilesChange) {
           onLocalFilesChange([...(localFiles || []), ...newLocalFiles])
@@ -218,7 +219,7 @@ export default function ImageUploader({ productId, images, onImagesChange, local
 
     await api.patch('/images/reorder', {
       images: reordered.map((i) => ({ id: i.id, sort_order: i.sort_order })),
-    }).catch(() => {})
+    }).catch(() => { })
   }
 
   return (
@@ -226,9 +227,8 @@ export default function ImageUploader({ productId, images, onImagesChange, local
       {/* Drop zone */}
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-3xl p-8 text-center cursor-pointer transition-all ${
-          isDragActive ? 'border-primary-400 bg-primary-50' : 'border-gray-200 hover:border-primary-300 hover:bg-pink-50/30'
-        }`}
+        className={`border-2 border-dashed rounded-3xl p-8 text-center cursor-pointer transition-all ${isDragActive ? 'border-primary-400 bg-primary-50' : 'border-gray-200 hover:border-primary-300 hover:bg-pink-50/30'
+          }`}
       >
         <input {...getInputProps()} />
         {uploading ? (
