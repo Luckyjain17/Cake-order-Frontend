@@ -386,7 +386,7 @@ export default function AdminDashboardPage() {
                 activeDot={{ r: 6 }}
                 hide={!visibleLines.Paid}
               >
-                <LabelList dataKey="Paid" position="top" offset={8} style={{ fontSize: 9, fontWeight: 700, fill: '#059669' }} formatter={(v: number) => v > 0 ? `₹${v}` : ''} />
+                <LabelList dataKey="Paid" position="top" offset={8} style={{ fontSize: 9, fontWeight: 700, fill: '#059669' }} formatter={(v: any) => (v && Number(v) > 0) ? `₹${v}` : ''} />
               </Line>
               <Line
                 type="monotone"
@@ -397,7 +397,7 @@ export default function AdminDashboardPage() {
                 activeDot={{ r: 6 }}
                 hide={!visibleLines.Pending}
               >
-                <LabelList dataKey="Pending" position="top" offset={8} style={{ fontSize: 9, fontWeight: 700, fill: '#d97706' }} formatter={(v: number) => v > 0 ? `₹${v}` : ''} />
+                <LabelList dataKey="Pending" position="top" offset={8} style={{ fontSize: 9, fontWeight: 700, fill: '#d97706' }} formatter={(v: any) => (v && Number(v) > 0) ? `₹${v}` : ''} />
               </Line>
               <Line
                 type="monotone"
@@ -408,7 +408,7 @@ export default function AdminDashboardPage() {
                 activeDot={{ r: 6 }}
                 hide={!visibleLines["Half Paid"]}
               >
-                <LabelList dataKey="Half Paid" position="top" offset={8} style={{ fontSize: 9, fontWeight: 700, fill: '#2563eb' }} formatter={(v: number) => v > 0 ? `₹${v}` : ''} />
+                <LabelList dataKey="Half Paid" position="top" offset={8} style={{ fontSize: 9, fontWeight: 700, fill: '#2563eb' }} formatter={(v: any) => (v && Number(v) > 0) ? `₹${v}` : ''} />
               </Line>
             </LineChart>
           </ResponsiveContainer>
