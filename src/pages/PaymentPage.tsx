@@ -1,11 +1,11 @@
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle, XCircle } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import api, { getImageUrl } from '@/lib/api'
 import { useQuery } from '@tanstack/react-query'
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '918269412418'
 const QR_CODE_URL = import.meta.env.VITE_QR_CODE_URL || ''
 
 function buildWhatsAppMessage(order: any, form: any) {
@@ -30,6 +30,7 @@ export default function PaymentPage() {
   const { state } = useLocation()
   const navigate = useNavigate()
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending')
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const order = state?.order
   const paymentMethod = state?.paymentMethod
@@ -50,10 +51,16 @@ export default function PaymentPage() {
     queryFn: () => api.get('/settings/payee_name').then((r) => r.data),
   })
 
+  const { data: whatsappSetting } = useQuery({
+    queryKey: ['settings', 'whatsapp_number'],
+    queryFn: () => api.get('/settings/whatsapp_number').then((r) => r.data).catch(() => null),
+  })
+
   const customQrUrl = getImageUrl(qrSetting?.value || undefined)
   const isUpiOffline = upiIdSetting ? upiIdSetting.value === '' : false
   const activeUpiId = upiIdSetting?.value === null ? '8269412418@ybl' : (upiIdSetting?.value || '')
   const activePayeeName = payeeNameSetting?.value === null ? "Manu's Cake Shop" : (payeeNameSetting?.value || '')
+  const activeWhatsappNumber = whatsappSetting?.value || import.meta.env.VITE_WHATSAPP_NUMBER || '918269412418'
   const orderAmount = order?.total_amount || 0
   const note = `Order_${orderNumber}`
 
@@ -62,7 +69,7 @@ export default function PaymentPage() {
   const activeQrCodeUrl = activeUpiId ? dynamicQrCodeUrl : (customQrUrl || QR_CODE_URL)
 
   const waMsg = buildWhatsAppMessage(order, form)
-  const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${waMsg}`
+  const waUrl = `https://wa.me/${activeWhatsappNumber}?text=${waMsg}`
 
   // If WhatsApp order — open WA immediately
   if (paymentMethod === 'whatsapp') {
@@ -85,10 +92,16 @@ export default function PaymentPage() {
 
   // QR Code flow
   const handlePaymentSuccess = async () => {
-    await api.patch(`/orders/admin/${order?.id}`, { payment_status: 'paid' }).catch(() => {})
-    setPaymentStatus('success')
-    // Open WhatsApp to send screenshot
-    window.open(waUrl, '_blank')
+    setIsProcessing(true)
+    try {
+      await api.patch(`/orders/admin/${order?.id}`, { payment_status: 'paid' })
+      setPaymentStatus('success')
+      window.open(waUrl, '_blank')
+    } catch {
+      toast.error('Failed to update payment status')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const handlePaymentFailed = () => {
@@ -124,6 +137,11 @@ export default function PaymentPage() {
 
   return (
     <div className="pb-nav">
+      {!isUpiOffline && paymentStatus === 'pending' && (
+        <div className="bg-amber-500 text-white text-xs font-bold text-center py-3 px-4 shadow-sm select-none leading-normal border-b border-amber-600/20">
+          📢 IMPORTANT: After paying, you MUST click the "Payment Successful ✅" button below to confirm your order!
+        </div>
+      )}
       <div className="page-container py-4 max-w-sm mx-auto">
         <h1 className="font-display text-2xl font-bold text-gray-900 text-center mb-1">Pay Now</h1>
         <p className="text-gray-400 text-sm text-center mb-6">Order #{orderNumber}</p>
@@ -185,13 +203,24 @@ export default function PaymentPage() {
                       href={`gpay://upi/pay?pa=${activeUpiId}&pn=${encodeURIComponent(activePayeeName)}&am=${orderAmount}&tn=${encodeURIComponent(note)}&cu=INR`}
                       className="py-3 rounded-2xl bg-white border border-gray-150 text-gray-700 font-bold text-sm flex items-center justify-center gap-2 shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
                     >
-                      🔵 Google Pay
+                      <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                      </svg>
+                      Google Pay
                     </a>
                     <a
                       href={`phonepe://pay?pa=${activeUpiId}&pn=${encodeURIComponent(activePayeeName)}&am=${orderAmount}&tn=${encodeURIComponent(note)}&cu=INR`}
                       className="py-3 rounded-2xl bg-white border border-gray-150 text-gray-700 font-bold text-sm flex items-center justify-center gap-2 shadow-sm hover:bg-gray-50 active:scale-95 transition-all"
                     >
-                      🟣 PhonePe
+                      <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="24" height="24" rx="6" fill="#6739B6" />
+                        <path d="M12 6v12M12 6c2.5 0 4.5 1.5 4.5 3.75s-2 3.75-4.5 3.75" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="12" cy="13.5" r="1.5" fill="white" />
+                      </svg>
+                      PhonePe
                     </a>
                   </div>
                 </div>
@@ -209,11 +238,20 @@ export default function PaymentPage() {
             {paymentStatus === 'pending' && (
               <div className="mt-6 space-y-3">
                 <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={handlePaymentSuccess}
-                  className="w-full py-4 rounded-2xl bg-green-500 text-white font-bold text-lg flex items-center justify-center gap-2 shadow-soft"
+                  whileTap={isProcessing ? undefined : { scale: 0.96 }}
+                  onClick={isProcessing ? undefined : handlePaymentSuccess}
+                  disabled={isProcessing}
+                  className="w-full py-4 rounded-2xl bg-green-500 text-white font-bold text-lg flex items-center justify-center gap-2 shadow-soft disabled:opacity-85 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle size={22} /> Payment Successful ✅
+                  {isProcessing ? (
+                    <>
+                      <Loader2 size={22} className="animate-spin" /> Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={22} /> Payment Successful ✅
+                    </>
+                  )}
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.96 }}

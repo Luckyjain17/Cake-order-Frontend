@@ -26,9 +26,11 @@ export default function AdminSettingsPage() {
   const [payeeName, setPayeeName] = useState('')
   const [reopenTime, setReopenTime] = useState('')
   const [closeUntil, setCloseUntil] = useState('')
+  const [whatsappNumber, setWhatsappNumber] = useState('')
   const [savingUpi, setSavingUpi] = useState(false)
   const [savingPayee, setSavingPayee] = useState(false)
   const [savingReopen, setSavingReopen] = useState(false)
+  const [savingWhatsapp, setSavingWhatsapp] = useState(false)
 
   // Fetch settings
   const { data: qrSetting, isLoading: loadQr } = useQuery<SettingResponse>({
@@ -44,6 +46,11 @@ export default function AdminSettingsPage() {
   const { data: payeeNameSetting, isLoading: loadPayee } = useQuery<SettingResponse>({
     queryKey: ['adminSettings', 'payee_name'],
     queryFn: () => api.get('/settings/payee_name').then((r) => r.data),
+  })
+
+  const { data: whatsappSetting, isLoading: loadWhatsapp } = useQuery<SettingResponse>({
+    queryKey: ['adminSettings', 'whatsapp_number'],
+    queryFn: () => api.get('/settings/whatsapp_number').then((r) => r.data),
   })
 
   const { data: storeSetting, isLoading: loadStore } = useQuery<SettingResponse>({
@@ -78,6 +85,12 @@ export default function AdminSettingsPage() {
       setPayeeName(payeeNameSetting.value === null ? "Manu's Cake Shop" : payeeNameSetting.value)
     }
   }, [payeeNameSetting])
+
+  useEffect(() => {
+    if (whatsappSetting) {
+      setWhatsappNumber(whatsappSetting.value === null ? '918269412418' : whatsappSetting.value)
+    }
+  }, [whatsappSetting])
 
   useEffect(() => {
     if (reopenSetting?.value) {
@@ -140,6 +153,7 @@ export default function AdminSettingsPage() {
     onSettled: (_, __, variables) => {
       if (variables.key === 'upi_id') setSavingUpi(false)
       if (variables.key === 'payee_name') setSavingPayee(false)
+      if (variables.key === 'whatsapp_number') setSavingWhatsapp(false)
     },
   })
 
@@ -155,6 +169,13 @@ export default function AdminSettingsPage() {
     setSavingPayee(true)
     saveSettingMutation.mutate({ key: 'payee_name', value: payeeName.trim() })
     toast.success('Payee Name updated successfully!')
+  }
+
+  const handleSaveWhatsapp = (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingWhatsapp(true)
+    saveSettingMutation.mutate({ key: 'whatsapp_number', value: whatsappNumber.trim() })
+    toast.success('WhatsApp Number updated successfully!')
   }
 
   const handleCloseStore = async (e: React.FormEvent) => {
@@ -205,7 +226,7 @@ export default function AdminSettingsPage() {
 
   const qrImageUrl = getImageUrl(qrSetting?.value || undefined)
   const storeStatus = storeSetting?.value === 'closed' ? 'closed' : 'open'
-  const isLoading = loadQr || loadUpi || loadPayee || loadStore || loadReopen
+  const isLoading = loadQr || loadUpi || loadPayee || loadStore || loadReopen || loadWhatsapp
 
   return (
     <div className="p-4 space-y-6 pb-8 max-w-md mx-auto">
@@ -293,14 +314,40 @@ export default function AdminSettingsPage() {
                 <Info size={20} />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900 text-base leading-none">UPI Autofill Settings</h2>
-                <p className="text-xs text-gray-400 mt-1">Configure details for dynamic QR generation</p>
+                <h2 className="font-semibold text-gray-900 text-base leading-none">Store Details & UPI Settings</h2>
+                <p className="text-xs text-gray-400 mt-1">Configure store contact and payment details</p>
               </div>
             </div>
 
             <p className="text-[10px] text-amber-600 bg-amber-50 p-2.5 rounded-xl border border-amber-100 leading-normal font-medium">
               💡 Leave both UPI ID and Payee Name empty to temporarily mark online payments as offline/down.
             </p>
+
+            {/* WhatsApp Number Form */}
+            <form onSubmit={handleSaveWhatsapp} className="space-y-2">
+              <label className="label">WhatsApp Contact Number (with country code)</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="input flex-1 py-2 text-sm"
+                  placeholder="e.g. 918269412418"
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  disabled={savingWhatsapp}
+                  className="btn-primary py-2 px-4 text-sm flex items-center gap-1.5 flex-shrink-0"
+                >
+                  {savingWhatsapp ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Save size={15} />
+                  )}
+                  Save
+                </button>
+              </div>
+            </form>
 
             {/* UPI ID Form */}
             <form onSubmit={handleSaveUpi} className="space-y-2">

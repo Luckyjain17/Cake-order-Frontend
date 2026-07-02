@@ -41,7 +41,7 @@ export default function HomePage() {
               Cakes that make <span className="text-gradient">moments</span> unforgettable
             </h1>
             <p className="mt-4 text-gray-500 text-base leading-relaxed">
-              Handcrafted with love. Perfect for every celebration — birthdays, weddings, anniversaries and more.
+              Handmade with love. Perfect for every celebration — birthdays, weddings, anniversaries and more.
             </p>
             <div className="mt-6 flex gap-3">
               <Link to="/shop" className="btn-primary">

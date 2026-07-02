@@ -116,12 +116,15 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (isClosed) return
+    const coverImg = product.cover_image || product.images?.[0]
+    const imageUrl = getImageUrl(coverImg?.thumbnail_url || coverImg?.url) || ''
+
     addItem({
       product_id: product.id,
       name: product.name,
       slug: product.slug,
       price: multipliedSellingPrice,
-      image_url: product.images?.[0]?.url || '',
+      image_url: imageUrl,
       qty,
       weight: selectedWeight,
     })
@@ -210,15 +213,20 @@ export default function ProductDetailPage() {
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Weight</label>
               <div className="flex flex-wrap gap-2">
-                {product.weight_options && JSON.parse(product.weight_options).map((w: string) => {
-                  const isSelected = selectedWeight === w
+                {displayWeights.map((w: string) => {
+                  const isSelected = selectedWeight === w || (w === 'Custom Weight' && isCustomWeight)
                   return (
                     <button
                       key={w}
                       type="button"
                       onClick={() => {
-                        setSelectedWeight(w)
-                        setIsCustomWeight(false)
+                        if (w === 'Custom Weight') {
+                          setIsCustomWeight(true)
+                          setSelectedWeight(customWeight)
+                        } else {
+                          setSelectedWeight(w)
+                          setIsCustomWeight(false)
+                        }
                       }}
                       className={`px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${isSelected
                         ? 'border-primary-500 bg-primary-50 text-primary-500'
@@ -229,21 +237,6 @@ export default function ProductDetailPage() {
                     </button>
                   )
                 })}
-                {product.is_customizable && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCustomWeight(true)
-                      setSelectedWeight(customWeight)
-                    }}
-                    className={`px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${isCustomWeight
-                      ? 'border-primary-500 bg-primary-50 text-primary-500'
-                      : 'border-gray-200 text-gray-600'
-                      }`}
-                  >
-                    Custom Weight
-                  </button>
-                )}
               </div>
 
               {/* Custom Weight selector Dropdown */}

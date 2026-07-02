@@ -37,6 +37,12 @@ export default function CheckoutPage() {
   })
   const isUpiOffline = !upiIdSetting?.value // empty/unset or not exists
 
+  const { data: whatsappSetting } = useQuery({
+    queryKey: ['settings', 'whatsapp_number'],
+    queryFn: () => api.get('/settings/whatsapp_number').then((r) => r.data).catch(() => null),
+  })
+  const activeWhatsappNumber = whatsappSetting?.value || import.meta.env.VITE_WHATSAPP_NUMBER || '918269412418'
+
   if (isClosed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
@@ -93,7 +99,7 @@ export default function CheckoutPage() {
       
       // Delay slightly for toast/state updates, then redirect
       setTimeout(() => {
-        window.location.href = `https://wa.me/918269412418?text=${encodeURIComponent(waMsg)}`
+        window.location.href = `https://wa.me/${activeWhatsappNumber}?text=${encodeURIComponent(waMsg)}`
       }, 800)
     } catch (err) {
       toast.error('Failed to process order. Please try again.')

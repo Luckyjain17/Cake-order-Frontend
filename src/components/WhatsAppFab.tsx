@@ -1,12 +1,19 @@
 import { MessageCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
-
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '918269412418'
+import { useQuery } from '@tanstack/react-query'
+import api from '@/lib/api'
 
 export default function WhatsAppFab() {
+  const { data: whatsappSetting } = useQuery({
+    queryKey: ['settings', 'whatsapp_number'],
+    queryFn: () => api.get('/settings/whatsapp_number').then((r) => r.data).catch(() => null),
+  })
+
+  const activeWhatsappNumber = whatsappSetting?.value || import.meta.env.VITE_WHATSAPP_NUMBER || '918269412418'
+
   const handleClick = () => {
     const msg = encodeURIComponent("Hi! I'd like to order a cake 🎂")
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank')
+    window.open(`https://wa.me/${activeWhatsappNumber}?text=${msg}`, '_blank')
   }
 
   return (
@@ -23,3 +30,4 @@ export default function WhatsAppFab() {
     </motion.button>
   )
 }
+
