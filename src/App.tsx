@@ -68,6 +68,7 @@ export default function App() {
             <Route path="/admin/products/edit/:id" element={<AdminGuard><AdminProductFormPage /></AdminGuard>} />
             <Route path="/admin/orders" element={<AdminGuard><AdminOrdersPage /></AdminGuard>} />
             <Route path="/admin/orders/new" element={<AdminGuard><AdminManualOrderPage /></AdminGuard>} />
+            <Route path="/admin/orders/edit/:id" element={<AdminGuard><AdminManualOrderPage /></AdminGuard>} />
             <Route path="/admin/settings" element={<AdminGuard><AdminSettingsPage /></AdminGuard>} />
 
             <Route path="*" element={<Navigate to="/" replace />} />

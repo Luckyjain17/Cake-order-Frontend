@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Search, Trash2, Phone } from 'lucide-react'
+import { Plus, Search, Trash2, Phone, Edit2 } from 'lucide-react'
 import api from '@/lib/api'
 import type { ManualOrder } from '@/types'
 import toast from 'react-hot-toast'
@@ -120,11 +120,19 @@ export default function AdminOrdersPage() {
             </div>
 
             {/* Action Bar */}
-            <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
+              {/* Edit Button */}
+              <Link
+                to={`/admin/orders/edit/${order.id}`}
+                className="py-2 rounded-xl bg-gray-50 text-gray-700 hover:bg-gray-100 flex items-center justify-center gap-1.5 transition-colors text-xs font-bold"
+                title="Edit Order"
+              >
+                <Edit2 size={14} /> Edit Order
+              </Link>
               {/* Delete Button */}
               <button
                 onClick={() => handleDelete(order.id, order.order_number)}
-                className="w-full py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center gap-1.5 transition-colors text-xs font-bold"
+                className="py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center gap-1.5 transition-colors text-xs font-bold"
                 title="Delete Order"
               >
                 <Trash2 size={14} /> Delete Order

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
 import { motion } from 'framer-motion'
@@ -15,9 +15,31 @@ const blank = {
 }
 
 export default function AdminManualOrderPage() {
+  const { id } = useParams<{ id: string }>()
+  const isEdit = !!id
   const [form, setForm] = useState<any>(blank)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (isEdit) {
+      api.get(`/orders/manual/${id}`)
+        .then((r) => {
+          const o = r.data
+          const unitPrice = o.quantity > 0 ? Math.round(o.amount / o.quantity) : o.amount
+          setForm({
+            ...o,
+            _unit_price: String(unitPrice),
+            quantity: String(o.quantity),
+            amount: String(o.amount),
+          })
+        })
+        .catch(() => {
+          toast.error('Failed to load order details')
+          navigate('/admin/orders')
+        })
+    }
+  }, [id, isEdit, navigate])
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((f: any) => ({ ...f, [k]: e.target.value }))
@@ -27,16 +49,28 @@ export default function AdminManualOrderPage() {
     setLoading(true)
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { _unit_price, ...payload } = form
-      await api.post('/orders/manual', {
-        ...payload,
-        quantity: parseInt(form.quantity) || 1,
-        amount: Math.round(parseFloat(form.amount) || 0),  // integer, no float drift
-      })
-      toast.success('Manual order created!')
+      const { _unit_price, id: _, order_number: __, created_at: ___, updated_at: ____, ...payload } = form
+      const qty = parseInt(form.quantity) || 1
+      const amt = Math.round(parseFloat(form.amount) || 0)
+
+      if (isEdit) {
+        await api.put(`/orders/manual/${id}`, {
+          ...payload,
+          quantity: qty,
+          amount: amt,
+        })
+        toast.success('Manual order updated!')
+      } else {
+        await api.post('/orders/manual', {
+          ...payload,
+          quantity: qty,
+          amount: amt,
+        })
+        toast.success('Manual order created!')
+      }
       navigate('/admin/orders')
     } catch {
-      toast.error('Failed to create order')
+      toast.error(isEdit ? 'Failed to update order' : 'Failed to create order')
     } finally {
       setLoading(false)
     }
@@ -45,7 +79,9 @@ export default function AdminManualOrderPage() {
   return (
     <div className="p-4 pb-8 max-w-lg mx-auto space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold text-gray-900">Manual Order</h1>
+        <h1 className="font-display text-2xl font-bold text-gray-900">
+          {isEdit ? 'Edit Manual Order' : 'Manual Order'}
+        </h1>
         <button onClick={() => navigate('/admin/orders')} className="btn-ghost">Cancel</button>
       </div>
 
@@ -165,7 +201,7 @@ export default function AdminManualOrderPage() {
         </div>
 
         <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.97 }} className="btn-primary w-full py-4 text-base">
-          {loading ? 'Saving…' : 'Create Manual Order'}
+          {loading ? 'Saving…' : isEdit ? 'Update Order' : 'Create Manual Order'}
         </motion.button>
       </form>
     </div>
