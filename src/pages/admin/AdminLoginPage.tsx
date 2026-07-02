@@ -36,8 +36,8 @@ export default function AdminLoginPage() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-pink-500 rounded-3xl flex items-center justify-center text-4xl mx-auto shadow-lifted">
-            🎂
+          <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-pink-500 rounded-3xl overflow-hidden flex items-center justify-center mx-auto shadow-lifted border border-pink-100">
+            <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <h1 className="font-display text-2xl font-bold text-gray-900 mt-4">Admin Panel</h1>
           <p className="text-gray-400 text-sm mt-1">HomeMade_MaPas Cake Shop</p>

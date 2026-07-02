@@ -4,7 +4,8 @@ import { motion } from 'framer-motion'
 import type { ProductListItem } from '@/types'
 import { useCart } from '@/context/CartContext'
 import toast from 'react-hot-toast'
-import { getImageUrl } from '@/lib/api'
+import api, { getImageUrl } from '@/lib/api'
+import { useQuery } from '@tanstack/react-query'
 
 interface Props {
   product: ProductListItem
@@ -14,8 +15,31 @@ export default function ProductCard({ product }: Props) {
   const { addItem } = useCart()
   const imageUrl = getImageUrl(product.cover_image?.thumbnail_url || product.cover_image?.url)
 
+  const { data: storeSetting } = useQuery({
+    queryKey: ['settings', 'store_status'],
+    queryFn: () => api.get('/settings/store_status').then((r) => r.data).catch(() => null),
+  })
+
+  const { data: reopenSetting } = useQuery({
+    queryKey: ['settings', 'store_reopen_time'],
+    queryFn: () => api.get('/settings/store_reopen_time').then((r) => r.data).catch(() => null),
+  })
+  const reopenTime = reopenSetting?.value
+
+  const isClosed = (() => {
+    if (storeSetting?.value !== 'closed') return false
+    if (!reopenTime) return true
+    const reopenDate = new Date(reopenTime)
+    if (isNaN(reopenDate.getTime())) return true
+    return new Date() < reopenDate
+  })()
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
+    if (isClosed) {
+      toast.error('Store is closed. Ordering is disabled.')
+      return
+    }
     addItem({
       product_id: product.id,
       name: product.name,
@@ -77,9 +101,10 @@ export default function ProductCard({ product }: Props) {
               )}
             </div>
             <motion.button
-              whileTap={{ scale: 0.85 }}
-              onClick={handleAddToCart}
-              className="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center shadow-soft"
+              whileTap={isClosed ? undefined : { scale: 0.85 }}
+              onClick={isClosed ? (e) => { e.preventDefault(); e.stopPropagation(); toast.error('Store is closed. Ordering is disabled.'); } : handleAddToCart}
+              className={`w-8 h-8 rounded-full flex items-center justify-center shadow-soft transition-colors ${isClosed ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-primary-500 text-white'}`}
+              disabled={isClosed}
             >
               <ShoppingBag size={14} />
             </motion.button>

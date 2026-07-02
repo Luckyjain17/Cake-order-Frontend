@@ -16,7 +16,7 @@ export default function AdminOrdersPage() {
       api.get('/orders/manual/all', {
         params: {
           page: pageParam,
-          per_page: 20,
+          per_page: 10,
           search: search || undefined,
         },
       }).then((r) => r.data),

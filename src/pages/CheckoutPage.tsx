@@ -1,14 +1,52 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useCart } from '@/context/CartContext'
 import { motion } from 'framer-motion'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
+import { useQuery } from '@tanstack/react-query'
 
 export default function CheckoutPage() {
   const { items, totalAmount, clearCart } = useCart()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+
+  const { data: storeSetting } = useQuery({
+    queryKey: ['settings', 'store_status'],
+    queryFn: () => api.get('/settings/store_status').then((r) => r.data).catch(() => null),
+  })
+
+  const { data: reopenSetting } = useQuery({
+    queryKey: ['settings', 'store_reopen_time'],
+    queryFn: () => api.get('/settings/store_reopen_time').then((r) => r.data).catch(() => null),
+  })
+  const reopenTime = reopenSetting?.value
+
+  const isClosed = (() => {
+    if (storeSetting?.value !== 'closed') return false
+    if (!reopenTime) return true
+    const reopenDate = new Date(reopenTime)
+    if (isNaN(reopenDate.getTime())) return true
+    return new Date() < reopenDate
+  })()
+
+  const { data: upiIdSetting } = useQuery({
+    queryKey: ['settings', 'upi_id'],
+    queryFn: () => api.get('/settings/upi_id').then((r) => r.data).catch(() => null),
+  })
+  const isUpiOffline = !upiIdSetting?.value // empty/unset or not exists
+
+  if (isClosed) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
+        <span className="text-5xl">🔴</span>
+        <h2 className="font-display text-xl font-bold text-gray-700">Store is Closed</h2>
+        <p className="text-gray-400 text-sm">We are currently closed. Checkout is temporarily disabled.</p>
+        <Link to="/" className="btn-primary mt-2">Go back to Home</Link>
+      </div>
+    )
+  }
 
   const handleWhatsAppOrder = async () => {
     if (items.length === 0) {
@@ -149,17 +187,17 @@ export default function CheckoutPage() {
         {/* Action Buttons */}
         <div className="space-y-3">
           <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={handlePayViaQRCode}
-            disabled={loading}
-            className="btn-primary w-full text-lg py-4 flex items-center justify-center gap-2"
+            whileTap={isUpiOffline ? undefined : { scale: 0.97 }}
+            onClick={isUpiOffline ? undefined : () => setShowModal(true)}
+            disabled={loading || isUpiOffline}
+            className={`w-full text-lg py-4 flex items-center justify-center gap-2 rounded-2xl font-bold transition-all ${isUpiOffline ? 'bg-gray-150 text-gray-400 cursor-not-allowed border border-gray-200' : 'btn-primary'}`}
           >
             {loading ? (
               <span>Processing...</span>
             ) : (
               <>
                 <span>📱</span>
-                <span>Pay via UPI / QR Code (Barcode)</span>
+                <span>{isUpiOffline ? 'UPI Payment (Temporarily Offline)' : 'Pay via UPI / QR Code (Barcode)'}</span>
               </>
             )}
           </motion.button>
@@ -184,6 +222,42 @@ export default function CheckoutPage() {
           </p>
         </div>
       </div>
+
+      {/* Screenshot Warning Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center space-y-4 shadow-lifted animate-scale-in">
+            <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto text-3xl">
+              ⚠️
+            </div>
+            <h3 className="font-bold text-gray-900 text-lg">Screenshot Required!</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              After you pay, you <strong>MUST</strong> send the payment screenshot to us on WhatsApp.
+            </p>
+            <p className="text-red-500 font-bold text-xs bg-red-50 py-2.5 px-4 rounded-xl border border-red-100 leading-normal">
+              Your order will NOT start being prepared until you share the payment screenshot! 🎂
+            </p>
+
+            <div className="space-y-2 pt-2">
+              <button
+                onClick={() => {
+                  setShowModal(false)
+                  handlePayViaQRCode()
+                }}
+                className="w-full py-3.5 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-2xl text-sm active:scale-95 transition-all shadow-md"
+              >
+                I Understand, Proceed to Pay
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full py-3.5 bg-gray-50 text-gray-500 font-bold rounded-2xl text-sm hover:bg-gray-100 active:scale-95 transition-all"
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

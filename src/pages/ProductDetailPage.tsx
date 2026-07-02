@@ -43,6 +43,25 @@ export default function ProductDetailPage() {
   const [customWeight, setCustomWeight] = useState('3.5kg')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
+  const { data: storeSetting } = useQ({
+    queryKey: ['settings', 'store_status'],
+    queryFn: () => api.get('/settings/store_status').then((r) => r.data).catch(() => null),
+  })
+
+  const { data: reopenSetting } = useQ({
+    queryKey: ['settings', 'store_reopen_time'],
+    queryFn: () => api.get('/settings/store_reopen_time').then((r) => r.data).catch(() => null),
+  })
+  const reopenTime = reopenSetting?.value
+
+  const isClosed = (() => {
+    if (storeSetting?.value !== 'closed') return false
+    if (!reopenTime) return true
+    const reopenDate = new Date(reopenTime)
+    if (isNaN(reopenDate.getTime())) return true
+    return new Date() < reopenDate
+  })()
+
   const productQuery = useQuery<Product>({
     queryKey: ['product', slug],
     queryFn: () => {
@@ -96,164 +115,211 @@ export default function ProductDetailPage() {
   const multipliedOriginalPrice = product.original_price * multiplier
 
   const handleAddToCart = () => {
+    if (isClosed) return
     addItem({
       product_id: product.id,
       name: product.name,
       slug: product.slug,
-      image_url: getImageUrl(product.cover_image?.thumbnail_url || product.cover_image?.url),
-      weight: selectedWeight,
       price: multipliedSellingPrice,
+      image_url: product.images?.[0]?.url || '',
       qty,
+      weight: selectedWeight,
     })
-    toast.success(`Added ${qty} × ${product.name} (${selectedWeight}) 🎂`)
+    toast.success('Added to cart')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="page-container py-6 pb-nav space-y-4">
+        <div className="skeleton aspect-square rounded-3xl" />
+        <div className="skeleton h-8 w-3/4 rounded-xl" />
+        <div className="skeleton h-5 w-1/2 rounded-xl" />
+      </div>
+    )
+  }
+
+  if (!product) {
+    return (
+      <div className="page-container py-12 text-center text-gray-500 font-medium">
+        Product not found
+      </div>
+    )
   }
 
   return (
     <div className="pb-nav">
-      <div className="page-container py-4 space-y-6">
-        {/* Image Gallery */}
-        <ImageGallery images={product.images} />
-
-        {/* Product Info */}
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-1.5">
-            {product.is_best_seller && <span className="badge-pink">⭐ Best Seller</span>}
-          </div>
-          <h1 className="font-display text-2xl font-bold text-gray-900 leading-tight">
-            {product.name}
-          </h1>
-          {product.short_description && (
-            <p className="text-gray-500 text-sm">{product.short_description}</p>
-          )}
-
-          {/* Price */}
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-gray-900">₹{multipliedSellingPrice}</span>
-            {multipliedOriginalPrice > multipliedSellingPrice && (
-              <>
-                <span className="text-gray-400 line-through text-lg">₹{multipliedOriginalPrice}</span>
-                <span className="badge-pink">{Math.round(product.discount_percent)}% off</span>
-              </>
-            )}
-          </div>
+      <div className="page-container py-6 max-w-lg mx-auto space-y-6">
+        {/* Images */}
+        <div className="aspect-square rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 shadow-soft">
+          <ImageGallery images={product.images || []} altText={product.name} />
         </div>
 
-        {/* Quick info */}
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { icon: Clock, label: 'Ready in', value: product.preparation_time || '24 hrs' },
-            { icon: ChefHat, label: 'Type', value: product.cake_type || 'Cream Cake' },
-          ].map(({ icon: Icon, label, value }) => (
-            <div key={label} className="bg-gray-50 rounded-2xl p-3 text-center">
-              <Icon size={18} className="text-primary-400 mx-auto mb-1" />
-              <p className="text-[10px] text-gray-400">{label}</p>
-              <p className="text-xs font-semibold text-gray-700 mt-0.5">{value}</p>
+        {/* Content */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-start gap-4">
+            <div>
+              <h1 className="font-display text-2xl font-bold text-gray-900 leading-tight">
+                {product.name}
+              </h1>
+              <p className="text-sm text-gray-400 mt-1">{product.short_description}</p>
             </div>
-          ))}
-        </div>
+            <div className="text-right flex-shrink-0">
+              <div className="flex flex-col items-end">
+                <div className="flex items-baseline gap-1.5">
+                  {product.original_price > product.selling_price && (
+                    <span className="text-sm text-gray-400 line-through font-medium">
+                      ₹{multipliedOriginalPrice.toLocaleString()}
+                    </span>
+                  )}
+                  <span className="text-2xl font-black text-primary-500 tracking-tight font-sans">
+                    ₹{multipliedSellingPrice.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-1">
+                  {product.original_price > product.selling_price && (
+                    <span className="badge-pink text-[9px] font-extrabold px-1.5 py-0.5 rounded-lg uppercase tracking-wider">
+                      {Math.round(product.discount_percent)}% OFF
+                    </span>
+                  )}
+                  {product.price_base_weight && (
+                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                      Base: {product.price_base_weight}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* Weight selector */}
-        <div>
-          <p className="label">Weight</p>
-          <div className="flex flex-wrap gap-2">
-            {displayWeights.map((w: string) => {
-              const isSelected = w === 'Custom Weight' ? isCustomWeight : (selectedWeight === w && !isCustomWeight)
-              return (
-                <button
-                  key={w}
-                  type="button"
-                  onClick={() => {
-                    if (w === 'Custom Weight') {
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { icon: Clock, label: 'Ready in', value: product.preparation_time || '24 hrs' },
+              // { icon: ChefHat, label: 'Type', value: product.cake_type || 'Cream Cake' },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="bg-gray-50 rounded-2xl p-3 text-center">
+                <Icon size={18} className="text-primary-400 mx-auto mb-1" />
+                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{label}</p>
+                <p className="text-sm font-bold text-gray-700 mt-0.5">{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Customizations Section */}
+          <div className="space-y-3">
+            {/* Weight Picker */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Weight</label>
+              <div className="flex flex-wrap gap-2">
+                {product.weight_options && JSON.parse(product.weight_options).map((w: string) => {
+                  const isSelected = selectedWeight === w
+                  return (
+                    <button
+                      key={w}
+                      type="button"
+                      onClick={() => {
+                        setSelectedWeight(w)
+                        setIsCustomWeight(false)
+                      }}
+                      className={`px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${isSelected
+                        ? 'border-primary-500 bg-primary-50 text-primary-500'
+                        : 'border-gray-200 text-gray-600'
+                        }`}
+                    >
+                      {w}
+                    </button>
+                  )
+                })}
+                {product.is_customizable && (
+                  <button
+                    type="button"
+                    onClick={() => {
                       setIsCustomWeight(true)
                       setSelectedWeight(customWeight)
-                    } else {
-                      setIsCustomWeight(false)
-                      setSelectedWeight(w)
-                    }
-                  }}
-                  className={`px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${isSelected
+                    }}
+                    className={`px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${isCustomWeight
                       ? 'border-primary-500 bg-primary-50 text-primary-500'
                       : 'border-gray-200 text-gray-600'
-                    }`}
-                >
-                  {w}
-                </button>
-              )
-            })}
-          </div>
+                      }`}
+                  >
+                    Custom Weight
+                  </button>
+                )}
+              </div>
 
-          {/* Custom Weight Select Dropdown */}
-          {isCustomWeight && (
-            <div className="mt-3 relative">
-              <label className="text-[10px] font-bold text-gray-400 block uppercase tracking-wide mb-1">
-                Select Custom Weight
-              </label>
-
-              {/* Custom Selector Button */}
-              <button
-                type="button"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm text-left font-semibold text-gray-800 flex justify-between items-center shadow-sm hover:border-primary-300 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-              >
-                <span>{customWeight}</span>
-                <ChevronDown size={16} className={`text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Options Popover */}
-              {isDropdownOpen && (
+              {/* Custom Weight selector Dropdown */}
+              {isCustomWeight && (
                 <>
-                  {/* Backdrop overlay to close when clicking outside */}
-                  <div className="fixed inset-0 z-20" onClick={() => setIsDropdownOpen(false)} />
-                  <div className="absolute left-0 right-0 mt-1.5 max-h-60 overflow-y-auto bg-white border border-gray-100 rounded-2xl shadow-lifted p-1 z-30 animate-fade-in select-none">
-                    {CUSTOM_WEIGHT_OPTIONS.map((opt) => (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => {
-                          setCustomWeight(opt)
-                          setSelectedWeight(opt)
-                          setIsDropdownOpen(false)
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm rounded-xl transition-all ${customWeight === opt
-                            ? 'bg-primary-50 text-primary-600 font-bold'
-                            : 'text-gray-600 hover:bg-gray-50'
-                          }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
+                  <div className="relative mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold text-gray-700 flex justify-between items-center"
+                    >
+                      <span>Custom: {customWeight}</span>
+                      <ChevronDown size={16} />
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-150 rounded-xl shadow-lifted z-10 max-h-40 overflow-y-auto p-1 space-y-1">
+                        {CUSTOM_WEIGHT_OPTIONS.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              setCustomWeight(opt)
+                              setSelectedWeight(opt)
+                              setIsDropdownOpen(false)
+                            }}
+                            className={`w-full text-left px-4 py-2 text-sm rounded-xl transition-all ${customWeight === opt
+                              ? 'bg-primary-50 text-primary-600 font-bold'
+                              : 'text-gray-600 hover:bg-gray-50'
+                              }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
             </div>
-          )}
-        </div>
-
-        {/* Qty + Cart */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-gray-100 rounded-2xl p-1">
-            <button
-              onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="w-9 h-9 rounded-xl bg-white shadow-soft font-bold text-gray-700 flex items-center justify-center"
-            >
-              −
-            </button>
-            <span className="w-8 text-center font-bold text-gray-900">{qty}</span>
-            <button
-              onClick={() => setQty((q) => q + 1)}
-              className="w-9 h-9 rounded-xl bg-white shadow-soft font-bold text-primary-500 flex items-center justify-center"
-            >
-              +
-            </button>
           </div>
-          <motion.button
-            whileTap={{ scale: 0.96 }}
-            onClick={handleAddToCart}
-            className="btn-primary flex-1"
-          >
-            <ShoppingBag size={18} />
-            Add to Cart — ₹{(multipliedSellingPrice * qty).toLocaleString()}
-          </motion.button>
+
+          {/* Qty + Cart */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-gray-100 rounded-2xl p-1">
+              <button
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                className="w-9 h-9 rounded-xl bg-white shadow-soft font-bold text-gray-700 flex items-center justify-center"
+                disabled={isClosed}
+              >
+                −
+              </button>
+              <span className="w-8 text-center font-bold text-gray-900">{qty}</span>
+              <button
+                onClick={() => setQty((q) => q + 1)}
+                className="w-9 h-9 rounded-xl bg-white shadow-soft font-bold text-primary-500 flex items-center justify-center"
+                disabled={isClosed}
+              >
+                +
+              </button>
+            </div>
+            <motion.button
+              whileTap={isClosed ? undefined : { scale: 0.96 }}
+              onClick={isClosed ? undefined : handleAddToCart}
+              disabled={isClosed}
+              className={`btn-primary flex-1 ${isClosed ? 'opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400' : ''}`}
+            >
+              {isClosed ? (
+                <span>Store Closed 🔴</span>
+              ) : (
+                <>
+                  <ShoppingBag size={18} />
+                  Add to Cart — ₹{(multipliedSellingPrice * qty).toLocaleString()}
+                </>
+              )}
+            </motion.button>
+          </div>
         </div>
 
         {/* Full description */}

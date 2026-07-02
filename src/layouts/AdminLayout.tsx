@@ -1,12 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { LayoutDashboard, ShoppingBag, Package, ClipboardList, LogOut, Plus, Globe } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, Package, ClipboardList, LogOut, Plus, Globe, Settings } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const nav = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/products', label: 'Products', icon: Package },
   { to: '/admin/orders', label: 'Orders', icon: ClipboardList },
+  { to: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -25,7 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="hidden md:flex flex-col w-60 bg-white border-r border-gray-100 fixed inset-y-0">
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🎂</span>
+            <img src="/logo.jpg" alt="Logo" className="w-10 h-10 rounded-full object-cover border border-pink-100 shadow-sm" />
             <div>
               <p className="font-display font-bold text-gray-900">Admin Panel</p>
               <p className="text-xs text-gray-400">{admin?.username}</p>

@@ -40,7 +40,7 @@ export default function ShopPage() {
     useInfiniteQuery<PaginatedProducts>({
       queryKey: ['shopProducts', categoryId, filter, flavor, cakeType],
       queryFn: ({ pageParam = 1 }) => {
-        const params: Record<string, string> = { page: String(pageParam), per_page: '20' }
+        const params: Record<string, string> = { page: String(pageParam), per_page: '10' }
         if (categoryId) params.category_id = categoryId
         if (filter === 'best_seller') params.is_best_seller = 'true'
         if (filter === 'trending') params.is_trending = 'true'

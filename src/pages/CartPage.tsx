@@ -2,9 +2,30 @@ import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
+import api from '@/lib/api'
 
 export default function CartPage() {
   const { items, removeItem, updateQty, totalAmount } = useCart()
+
+  const { data: storeSetting } = useQuery({
+    queryKey: ['settings', 'store_status'],
+    queryFn: () => api.get('/settings/store_status').then((r) => r.data).catch(() => null),
+  })
+
+  const { data: reopenSetting } = useQuery({
+    queryKey: ['settings', 'store_reopen_time'],
+    queryFn: () => api.get('/settings/store_reopen_time').then((r) => r.data).catch(() => null),
+  })
+  const reopenTime = reopenSetting?.value
+
+  const isClosed = (() => {
+    if (storeSetting?.value !== 'closed') return false
+    if (!reopenTime) return true
+    const reopenDate = new Date(reopenTime)
+    if (isNaN(reopenDate.getTime())) return true
+    return new Date() < reopenDate
+  })()
 
   if (!items.length) {
     return (
@@ -92,9 +113,20 @@ export default function CartPage() {
           </div>
         </div>
 
-        <Link to="/checkout" className="btn-primary w-full mt-4 text-center">
-          Proceed to Checkout →
-        </Link>
+        {isClosed ? (
+          <div className="mt-4 space-y-2">
+            <button disabled className="btn-primary bg-gray-400 hover:bg-gray-400 text-white opacity-50 cursor-not-allowed w-full text-center py-4 rounded-2xl">
+              Store is Closed 🔴
+            </button>
+            <p className="text-xs text-red-500 font-bold text-center">
+              We are currently closed. Checkout is temporarily disabled.
+            </p>
+          </div>
+        ) : (
+          <Link to="/checkout" className="btn-primary w-full mt-4 text-center">
+            Proceed to Checkout →
+          </Link>
+        )}
       </div>
     </div>
   )

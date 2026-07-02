@@ -147,7 +147,7 @@ export default function AdminProductFormPage() {
       setSavedProductId(product.id)
       try {
         setSelectedWeights(JSON.parse(product.weight_options || '[]'))
-      } catch {}
+      } catch { }
     }
   }, [product])
 
@@ -283,19 +283,19 @@ export default function AdminProductFormPage() {
         queryClient.invalidateQueries({ queryKey: ['trending'] })
         queryClient.invalidateQueries({ queryKey: ['newArrivals'] })
         queryClient.invalidateQueries({ queryKey: ['shopProducts'] })
-        
+
         toast.success('Product updated!')
         handleDone()
       } else {
-        const { data } = await api.post('/products/', payload)
+        await api.post('/products/', payload)
         queryClient.invalidateQueries({ queryKey: ['adminProducts'] })
         queryClient.invalidateQueries({ queryKey: ['featured'] })
         queryClient.invalidateQueries({ queryKey: ['trending'] })
         queryClient.invalidateQueries({ queryKey: ['newArrivals'] })
         queryClient.invalidateQueries({ queryKey: ['shopProducts'] })
-        
-        setSavedProductId(data.id)
-        toast.success('Product created! Now you can upload images.')
+
+        toast.success('Product created successfully!')
+        handleDone()
       }
     } catch {
       toast.error('Failed to save product')
@@ -363,25 +363,25 @@ export default function AdminProductFormPage() {
             </div>
           </Field>
 
-            <Field label="Flavor">
-              <div className="flex gap-2">
-                <select
-                  className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-white"
-                  value={form.flavor}
-                  onChange={set('flavor')}
-                >
-                  <option value="">Select flavor</option>
-                  {dynamicFlavors.map((f) => <option key={f} value={f}>{f}</option>)}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setShowFlavorManager(true)}
-                  className="btn-secondary px-3 py-1.5 text-xs flex-shrink-0"
-                >
-                  + Add / Manage
-                </button>
-              </div>
-            </Field>
+          <Field label="Flavor">
+            <div className="flex gap-2">
+              <select
+                className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-white"
+                value={form.flavor}
+                onChange={set('flavor')}
+              >
+                <option value="">Select flavor</option>
+                {dynamicFlavors.map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+              <button
+                type="button"
+                onClick={() => setShowFlavorManager(true)}
+                className="btn-secondary px-3 py-1.5 text-xs flex-shrink-0"
+              >
+                + Add / Manage
+              </button>
+            </div>
+          </Field>
           <Field label="Shape">
             <div className="flex flex-wrap gap-2">
               {SHAPES.map((s) => (
@@ -389,9 +389,8 @@ export default function AdminProductFormPage() {
                   key={s}
                   type="button"
                   onClick={() => setForm((f: any) => ({ ...f, shape: f.shape === s ? '' : s }))}
-                  className={`px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all ${
-                    form.shape === s ? 'border-primary-500 bg-primary-50 text-primary-500' : 'border-gray-200 text-gray-600'
-                  }`}
+                  className={`px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all ${form.shape === s ? 'border-primary-500 bg-primary-50 text-primary-500' : 'border-gray-200 text-gray-600'
+                    }`}
                 >
                   {s}
                 </button>
@@ -405,9 +404,8 @@ export default function AdminProductFormPage() {
                   key={w}
                   type="button"
                   onClick={() => toggleWeight(w)}
-                  className={`px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all ${
-                    selectedWeights.includes(w) ? 'border-primary-500 bg-primary-50 text-primary-500' : 'border-gray-200 text-gray-600'
-                  }`}
+                  className={`px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all ${selectedWeights.includes(w) ? 'border-primary-500 bg-primary-50 text-primary-500' : 'border-gray-200 text-gray-600'
+                    }`}
                 >
                   {w}
                 </button>
@@ -459,14 +457,14 @@ export default function AdminProductFormPage() {
                 placeholder="e.g. 24 hours, 2 days"
               />
             </Field>
-            <Field label="Serves">
+            {/* <Field label="Serves">
               <input
                 className="input"
                 value={form.serves}
                 onChange={set('serves')}
                 placeholder="e.g. 6-8 people"
               />
-            </Field>
+            </Field> */}
           </div>
         </Section>
 
