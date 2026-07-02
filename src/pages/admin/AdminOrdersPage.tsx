@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Search, Trash2, Phone, Edit2 } from 'lucide-react'
+import { Plus, Search, Trash2, Phone, Edit2, SlidersHorizontal, X, Check } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 import api from '@/lib/api'
 import type { ManualOrder } from '@/types'
 import toast from 'react-hot-toast'
@@ -12,7 +13,35 @@ export default function AdminOrdersPage() {
   const [sourceFilter, setSourceFilter] = useState('')
   const [paymentFilter, setPaymentFilter] = useState('')
   const [weightFilter, setWeightFilter] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
+  const [draftSource, setDraftSource] = useState('')
+  const [draftPayment, setDraftPayment] = useState('')
+  const [draftWeight, setDraftWeight] = useState('')
   const qc = useQueryClient()
+
+  const openFilters = () => {
+    setDraftSource(sourceFilter)
+    setDraftPayment(paymentFilter)
+    setDraftWeight(weightFilter)
+    setShowFilters(true)
+  }
+
+  const applyFilters = () => {
+    setSourceFilter(draftSource)
+    setPaymentFilter(draftPayment)
+    setWeightFilter(draftWeight)
+    setShowFilters(false)
+  }
+
+  const clearFilters = () => {
+    setDraftSource('')
+    setDraftPayment('')
+    setDraftWeight('')
+    setSourceFilter('')
+    setPaymentFilter('')
+    setWeightFilter('')
+    setShowFilters(false)
+  }
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ['manualOrders', search, statusFilter, sourceFilter, paymentFilter, weightFilter],
@@ -63,80 +92,31 @@ export default function AdminOrdersPage() {
         </Link>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          className="input pl-10"
-          placeholder="Search by name, phone, or cake…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* Filter Selects */}
-      <div className="grid grid-cols-2 gap-2">
-        <select
-          value={sourceFilter}
-          onChange={(e) => setSourceFilter(e.target.value)}
-          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
+      {/* Search Bar & Filter trigger */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            className="input pl-10"
+            placeholder="Search by name, phone, or cake…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={openFilters}
+          className={`flex items-center justify-center gap-1.5 px-4 rounded-xl border h-[42px] text-xs font-bold transition-all flex-shrink-0 ${
+            sourceFilter || paymentFilter || weightFilter
+              ? 'bg-primary-50 border-primary-200 text-primary-600'
+              : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+          }`}
         >
-          <option value="">All Sources</option>
-          <option value="whatsapp">WhatsApp</option>
-          <option value="phone">Phone</option>
-          <option value="walkin">Walk-in</option>
-          <option value="instagram">Instagram</option>
-          <option value="facebook">Facebook</option>
-          <option value="other">Other</option>
-        </select>
-
-        <select
-          value={paymentFilter}
-          onChange={(e) => setPaymentFilter(e.target.value)}
-          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
-        >
-          <option value="">All Payments</option>
-          <option value="pending">Pending</option>
-          <option value="paid">Paid</option>
-          <option value="half">Half Payment</option>
-        </select>
-
-        <select
-          value={weightFilter}
-          onChange={(e) => setWeightFilter(e.target.value)}
-          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
-        >
-          <option value="">All Weights</option>
-          <option value="500g">500g</option>
-          <option value="1kg">1kg</option>
-          <option value="1.5kg">1.5kg</option>
-          <option value="2kg">2kg</option>
-          <option value="2.5kg">2.5kg</option>
-          <option value="3kg">3kg</option>
-          <option value="3.5kg">3.5kg</option>
-          <option value="4kg">4kg</option>
-          <option value="4.5kg">4.5kg</option>
-          <option value="5kg">5kg</option>
-          <option value="6kg">6kg</option>
-          <option value="7kg">7kg</option>
-          <option value="8kg">8kg</option>
-          <option value="9kg">9kg</option>
-          <option value="10kg">10kg</option>
-        </select>
-
-        {/* <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
-        >
-          <option value="">All Statuses</option>
-          <option value="new">New</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="processing">Processing</option>
-          <option value="ready">Ready</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-        </select> */}
+          <SlidersHorizontal size={14} />
+          Filters
+          {(sourceFilter || paymentFilter || weightFilter) && (
+            <span className="w-1.5 h-1.5 rounded-full bg-primary-500" />
+          )}
+        </button>
       </div>
 
       {/* Orders List */}
@@ -156,79 +136,124 @@ export default function AdminOrdersPage() {
             </p>
           </div>
         ) : (
-          orders.map((order) => (
-            <div key={order.id} className="card p-4 space-y-3 border border-gray-100 shadow-sm">
-              {/* Header: Order Number */}
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sm text-gray-900">#{order.order_number}</span>
-              </div>
+          orders.map((order) => {
+            const paidAmt = order.paid_amount || 0
+            const totalAmt = order.amount
+            const balanceAmt = Math.max(0, totalAmt - paidAmt)
+            const paidPercent = totalAmt > 0 ? Math.round((paidAmt / totalAmt) * 100) : 0
 
-              {/* Customer Details */}
-              <div className="text-sm border-b border-gray-50 pb-2">
+            return (
+              <div
+                key={order.id}
+                className="card p-4 space-y-4 border border-gray-100 shadow-sm hover:shadow-soft transition-all duration-300 relative overflow-hidden bg-white"
+              >
+                {/* Header: Order Number & Source */}
                 <div className="flex items-center justify-between">
-                  <p className="font-semibold text-gray-800">{order.customer_name}</p>
-                  <a
-                    href={`tel:${order.mobile_number}`}
-                    className="flex items-center gap-1 text-xs text-primary-500 font-bold bg-primary-50 px-2.5 py-1 rounded-xl"
-                  >
-                    <Phone size={11} /> Call
-                  </a>
-                </div>
-                <p className="text-gray-400 text-xs mt-0.5">{order.mobile_number}</p>
-                {order.address && (
-                  <p className="text-gray-500 text-xs mt-1 bg-gray-50 p-2 rounded-xl border border-gray-100">{order.address}</p>
-                )}
-              </div>
-
-              {/* Product Details */}
-              <div className="flex justify-between items-baseline text-sm bg-pink-50/20 p-2.5 rounded-2xl">
-                <span className="text-gray-700 font-medium">{order.cake_name} <span className="text-xs text-gray-400 font-normal">({order.weight || '1kg'}) × {order.quantity}</span></span>
-                <span className="font-bold text-primary-600">₹{order.amount.toLocaleString()}</span>
-              </div>
-
-              {/* Meta Details: Source, Date */}
-              <div className="flex justify-between items-center text-xs text-gray-400">
-                <div className="flex items-center gap-1.5">
-                  <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-lg capitalize">{order.order_source}</span>
-                  <span className={`px-2 py-0.5 rounded-lg font-bold text-[9px] uppercase tracking-wider border ${order.payment_status === 'paid'
-                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                    : order.payment_status === 'half'
-                      ? 'bg-blue-50 text-blue-600 border-blue-100'
-                      : 'bg-amber-50 text-amber-600 border-amber-100'
-                    }`}>
-                    {order.payment_status === 'half' ? 'Half Payment' : order.payment_status}
+                  <span className="bg-pink-50 text-primary-600 px-2.5 py-1 rounded-xl text-xs font-extrabold tracking-wide border border-pink-100/50">
+                    #{order.order_number}
                   </span>
+                  
+                  <div className="flex items-center gap-1.5">
+                    <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider capitalize">
+                      {order.order_source === 'whatsapp' ? '💬' : order.order_source === 'phone' ? '📞' : order.order_source === 'walkin' ? '🚶' : order.order_source === 'instagram' ? '📸' : order.order_source === 'facebook' ? '📘' : '📌'} {order.order_source}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-lg font-bold text-[9px] uppercase tracking-wider border ${
+                      order.payment_status === 'paid'
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                        : order.payment_status === 'half'
+                          ? 'bg-blue-50 text-blue-600 border-blue-100'
+                          : 'bg-amber-50 text-amber-600 border-amber-100'
+                    }`}>
+                      {order.payment_status === 'half' ? 'Half Paid' : order.payment_status}
+                    </span>
+                  </div>
                 </div>
-                {order.delivery_date && <span>📅 {order.delivery_date}</span>}
-              </div>
 
-              {/* Action Bar */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-50">
-                {/* Edit Button */}
-                <Link
-                  to={`/admin/orders/edit/${order.id}`}
-                  className="py-2 rounded-xl bg-gray-50 text-gray-700 hover:bg-gray-100 flex items-center justify-center gap-1.5 transition-colors text-xs font-bold"
-                  title="Edit Order"
-                >
-                  <Edit2 size={14} /> Edit Order
-                </Link>
-                {/* Delete Button */}
-                <button
-                  onClick={() => handleDelete(order.id, order.order_number)}
-                  className="py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center gap-1.5 transition-colors text-xs font-bold"
-                  title="Delete Order"
-                >
-                  <Trash2 size={14} /> Delete Order
-                </button>
-              </div>
+                {/* Customer Info */}
+                <div className="space-y-1.5 text-xs text-gray-600">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-gray-800 text-sm">{order.customer_name}</p>
+                    <a
+                      href={`tel:${order.mobile_number}`}
+                      className="flex items-center gap-1 text-[11px] text-primary-500 font-extrabold bg-primary-50 px-2.5 py-1 rounded-xl hover:bg-primary-100 transition-colors"
+                    >
+                      <Phone size={11} /> Call Now
+                    </a>
+                  </div>
+                  <p className="text-gray-400 font-medium">{order.mobile_number}</p>
+                  {order.address && (
+                    <div className="flex gap-1.5 items-start bg-gray-50/50 border border-gray-100 p-2 rounded-xl mt-1 text-gray-500">
+                      <span className="mt-0.5 text-xs">📍</span>
+                      <p className="leading-relaxed truncate">{order.address}</p>
+                    </div>
+                  )}
+                </div>
 
-              {order.notes && (
-                <p className="text-xs text-gray-500 bg-amber-50/50 border border-amber-100 rounded-xl px-3 py-2">
-                  📝 {order.notes}
-                </p>
-              )}
-            </div>
-          ))
+                {/* Product Box */}
+                <div className="flex justify-between items-center bg-gradient-to-r from-pink-50/30 to-purple-50/10 p-3 rounded-2xl border border-pink-100/30">
+                  <div className="min-w-0 pr-2">
+                    <p className="text-sm font-bold text-gray-800 truncate">{order.cake_name}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                      ⚖️ {order.weight || '1kg'} • {order.quantity} qty
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-extrabold text-primary-600">₹{totalAmt.toLocaleString()}</p>
+                    <p className="text-[9px] text-gray-400 font-semibold mt-0.5">₹{Math.round(totalAmt / (order.quantity || 1)).toLocaleString()}/unit</p>
+                  </div>
+                </div>
+
+                {/* Half Paid Breakdown box */}
+                {order.payment_status === 'half' && (
+                  <div className="space-y-1.5 p-3 bg-blue-50/30 border border-blue-50 rounded-2xl text-[10px]">
+                    <div className="flex justify-between font-bold text-blue-600">
+                      <span>Paid: ₹{paidAmt.toLocaleString()}</span>
+                      <span>Balance: ₹{balanceAmt.toLocaleString()}</span>
+                    </div>
+                    {/* Visual Progress Bar */}
+                    <div className="w-full bg-blue-100 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-blue-500 h-1.5 rounded-full transition-all"
+                        style={{ width: `${paidPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes box */}
+                {order.notes && (
+                  <div className="flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50/40 border border-amber-100 rounded-xl p-2.5 leading-relaxed">
+                    <span className="text-xs">📝</span>
+                    <p>{order.notes}</p>
+                  </div>
+                )}
+
+                {/* Delivery Date */}
+                {order.delivery_date && (
+                  <div className="flex items-center gap-1 text-[10px] text-gray-400 font-semibold border-t border-gray-50 pt-2">
+                    <span>📅 Delivery Date:</span>
+                    <span className="text-gray-700 font-bold">{order.delivery_date}</span>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Link
+                    to={`/admin/orders/edit/${order.id}`}
+                    className="py-2 rounded-xl bg-gray-50 text-gray-700 hover:bg-gray-100 flex items-center justify-center gap-1.5 transition-colors text-[11px] font-bold border border-gray-100/50"
+                  >
+                    <Edit2 size={13} /> Edit Order
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(order.id, order.order_number)}
+                    className="py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center gap-1.5 transition-colors text-[11px] font-bold border border-red-100/50"
+                  >
+                    <Trash2 size={13} /> Delete
+                  </button>
+                </div>
+              </div>
+            )
+          })
         )}
       </div>
 
@@ -242,6 +267,131 @@ export default function AdminOrdersPage() {
           {isFetchingNextPage ? 'Loading more…' : 'Load More'}
         </button>
       )}
+
+      {/* Filter Drawer */}
+      <AnimatePresence>
+        {showFilters && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-40"
+              onClick={() => setShowFilters(false)}
+            />
+            {/* Sheet */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 210 }}
+              className="fixed bottom-0 inset-x-0 bg-white z-50 rounded-t-[2.5rem] p-6 pb-8 overflow-y-auto max-h-[85vh] shadow-lifted border-t border-gray-100 max-w-md mx-auto space-y-6"
+            >
+              <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-2" />
+              
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-lg font-bold text-gray-900">Filters</h3>
+                <button onClick={() => setShowFilters(false)} className="btn-icon">
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* 1. Source Filter */}
+              <div className="space-y-2.5">
+                <p className="text-gray-700 text-xs font-bold uppercase tracking-wide">Order Source</p>
+                <div className="flex flex-wrap gap-2">
+                  {['whatsapp', 'phone', 'walkin', 'instagram', 'facebook', 'other'].map((src) => {
+                    const active = draftSource === src
+                    return (
+                      <button
+                        key={src}
+                        onClick={() => setDraftSource(active ? '' : src)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border capitalize transition-all ${
+                          active
+                            ? 'bg-primary-500 text-white border-primary-500 shadow-sm'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border-transparent'
+                        }`}
+                      >
+                        {active && <Check size={10} />}
+                        {src === 'whatsapp' ? '💬' : src === 'phone' ? '📞' : src === 'walkin' ? '🚶' : src === 'instagram' ? '📸' : src === 'facebook' ? '📘' : '📌'} {src}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Payment Filter */}
+              <div className="space-y-2.5">
+                <p className="text-gray-700 text-xs font-bold uppercase tracking-wide">Payment Status</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { val: 'pending', label: 'Pending' },
+                    { val: 'paid', label: 'Paid' },
+                    { val: 'half', label: 'Half Paid' }
+                  ].map((p) => {
+                    const active = draftPayment === p.val
+                    return (
+                      <button
+                        key={p.val}
+                        onClick={() => setDraftPayment(active ? '' : p.val)}
+                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                          active
+                            ? 'bg-primary-500 text-white border-primary-500 shadow-sm'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border-transparent'
+                        }`}
+                      >
+                        {active && <Check size={10} />}
+                        {p.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Weight Filter */}
+              <div className="space-y-2.5">
+                <p className="text-gray-700 text-xs font-bold uppercase tracking-wide">Cake Weight</p>
+                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1 border border-gray-100 rounded-2xl bg-gray-50/30">
+                  {['500g', '1kg', '1.5kg', '2kg', '2.5kg', '3kg', '3.5kg', '4kg', '4.5kg', '5kg', '6kg', '7kg', '8kg', '9kg', '10kg'].map((w) => {
+                    const active = draftWeight === w
+                    return (
+                      <button
+                        key={w}
+                        onClick={() => setDraftWeight(active ? '' : w)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                          active
+                            ? 'bg-primary-500 text-white border-primary-500 shadow-sm'
+                            : 'bg-white text-gray-600 hover:bg-gray-100 border-gray-200'
+                        }`}
+                      >
+                        {active && <Check size={10} />}
+                        {w}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={clearFilters}
+                  className="btn-secondary flex-1 py-3 rounded-2xl text-xs font-bold"
+                >
+                  Clear All
+                </button>
+                <button
+                  onClick={applyFilters}
+                  className="btn-primary flex-1 py-3 rounded-2xl text-xs font-bold"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

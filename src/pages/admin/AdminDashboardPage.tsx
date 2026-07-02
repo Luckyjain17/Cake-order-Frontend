@@ -63,9 +63,9 @@ export default function AdminDashboardPage() {
     0
   )
 
-  // ✅ Revenue = sum of all currently loaded paid order amounts in the list
+  // ✅ Revenue = sum of all paid_amount across all orders in range
   const rangeRevenue = dateOrders.reduce(
-    (sum: number, order: any) => sum + (order.payment_status === 'paid' ? (Number(order.amount) || 0) : 0),
+    (sum: number, order: any) => sum + (Number(order.paid_amount) || 0),
     0
   )
 
@@ -83,18 +83,10 @@ export default function AdminDashboardPage() {
   // Half-paid count and weight
   const halfCountOnly = dateOrders.filter((order: any) => order.payment_status === 'half').length
 
-  // Pending-only revenue: 100% of amount where status is pending
-  const pendingOnlyRevenue = dateOrders.reduce((sum: number, order: any) => {
-    if (order.payment_status === 'pending') {
-      return sum + (Number(order.amount) || 0)
-    }
-    return sum
-  }, 0)
-
-  // Half-paid revenue: 50% of amount where status is half
-  const halfPaidRevenue = dateOrders.reduce((sum: number, order: any) => {
-    if (order.payment_status === 'half') {
-      return sum + ((Number(order.amount) || 0) / 2)
+  // Pending revenue: total balance due from both pending and half paid orders
+  const totalPendingRevenue = dateOrders.reduce((sum: number, order: any) => {
+    if (order.payment_status === 'pending' || order.payment_status === 'half') {
+      return sum + ((Number(order.amount) || 0) - (Number(order.paid_amount) || 0))
     }
     return sum
   }, 0)
@@ -192,17 +184,17 @@ export default function AdminDashboardPage() {
     )
 
     const paid = ordersOnDate.reduce(
-      (sum: number, order: any) => sum + (order.payment_status === 'paid' ? (Number(order.amount) || 0) : 0),
+      (sum: number, order: any) => sum + (Number(order.paid_amount) || 0),
       0
     )
 
     const pending = ordersOnDate.reduce(
-      (sum: number, order: any) => sum + (order.payment_status === 'pending' ? (Number(order.amount) || 0) : 0),
+      (sum: number, order: any) => sum + (order.payment_status === 'pending' ? ((Number(order.amount) || 0) - (Number(order.paid_amount) || 0)) : 0),
       0
     )
 
     const half = ordersOnDate.reduce(
-      (sum: number, order: any) => sum + (order.payment_status === 'half' ? ((Number(order.amount) || 0) / 2) : 0),
+      (sum: number, order: any) => sum + (order.payment_status === 'half' ? ((Number(order.amount) || 0) - (Number(order.paid_amount) || 0)) : 0),
       0
     )
 
@@ -301,7 +293,7 @@ export default function AdminDashboardPage() {
       {/* Date Specific Stats Card */}
       <div className="grid grid-cols-2 gap-3">
         {/* Total Orders Card */}
-        <div className="card p-3.5 bg-gradient-to-br from-primary-500 to-pink-400 text-white shadow-soft relative overflow-hidden flex flex-col justify-between min-h-[96px]">
+        <div className="col-span-2 card p-3.5 bg-gradient-to-br from-primary-500 to-pink-400 text-white shadow-soft relative overflow-hidden flex flex-col justify-between min-h-[96px]">
           <div className="absolute -right-1 -bottom-1 text-4xl opacity-15 select-none pointer-events-none">
             <ShoppingBag size={40} />
           </div>
@@ -319,7 +311,7 @@ export default function AdminDashboardPage() {
           </div>
           <div>
             <p className="text-2xl font-extrabold">₹{rangeRevenue.toLocaleString()}</p>
-            <p className="text-[10px] font-semibold opacity-90">{paidCountOnly} paid • {paidWeightOnly} kg</p>
+            <p className="text-[10px] font-semibold opacity-90">{paidCountOnly} paid • {paidWeightOnly.toFixed(1)} kg</p>
           </div>
           <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">Revenue</p>
         </div>
@@ -327,19 +319,10 @@ export default function AdminDashboardPage() {
         {/* Pending Orders Card */}
         <div className="card p-3.5 bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-soft relative overflow-hidden flex flex-col justify-between min-h-[96px]">
           <div>
-            <p className="text-2xl font-extrabold">₹{pendingOnlyRevenue.toLocaleString()}</p>
-            <p className="text-[10px] font-semibold opacity-90">{pendingCountOnly} pending • {pendingWeightOnly} kg</p>
+            <p className="text-2xl font-extrabold">₹{totalPendingRevenue.toLocaleString()}</p>
+            <p className="text-[10px] font-semibold opacity-90">{pendingCountOnly + halfCountOnly} pending • {(pendingWeightOnly + halfWeightOnly).toFixed(1)} kg</p>
           </div>
           <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">Pending</p>
-        </div>
-
-        {/* Half Paid Orders Card */}
-        <div className="card p-3.5 bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-soft relative overflow-hidden flex flex-col justify-between min-h-[96px]">
-          <div>
-            <p className="text-2xl font-extrabold">₹{halfPaidRevenue.toLocaleString()}</p>
-            <p className="text-[10px] font-semibold opacity-90">{halfCountOnly} half paid • {halfWeightOnly} kg</p>
-          </div>
-          <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">Half Paid</p>
         </div>
       </div>
 
@@ -399,17 +382,6 @@ export default function AdminDashboardPage() {
               >
                 <LabelList dataKey="Pending" position="top" offset={8} style={{ fontSize: 9, fontWeight: 700, fill: '#d97706' }} formatter={(v: any) => (v && Number(v) > 0) ? `₹${v}` : ''} />
               </Line>
-              <Line
-                type="monotone"
-                dataKey="Half Paid"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ r: 4, strokeWidth: 1 }}
-                activeDot={{ r: 6 }}
-                hide={!visibleLines["Half Paid"]}
-              >
-                <LabelList dataKey="Half Paid" position="top" offset={8} style={{ fontSize: 9, fontWeight: 700, fill: '#2563eb' }} formatter={(v: any) => (v && Number(v) > 0) ? `₹${v}` : ''} />
-              </Line>
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -433,15 +405,6 @@ export default function AdminDashboardPage() {
           >
             <span className={`w-1.5 h-1.5 rounded-full ${visibleLines.Pending ? 'bg-amber-500' : 'bg-gray-300'}`} />
             Pending
-          </button>
-          <button
-            onClick={() => setVisibleLines(prev => ({ ...prev, "Half Paid": !prev["Half Paid"] }))}
-            className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold flex items-center gap-1.5 transition-all ${
-              visibleLines["Half Paid"] ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm' : 'bg-gray-50 border-gray-100 text-gray-400'
-            }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${visibleLines["Half Paid"] ? 'bg-blue-500' : 'bg-gray-300'}`} />
-            Half Paid
           </button>
         </div>
       </div>

@@ -123,6 +123,7 @@ export interface ManualOrder {
   quantity: number
   weight?: string
   amount: number
+  paid_amount?: number
   order_source: string
   payment_status: string
   status: string

@@ -11,6 +11,7 @@ const blank = {
   cake_name: '', quantity: '1', weight: '1kg', amount: '',
   _unit_price: '',
   order_source: 'whatsapp', payment_status: 'pending',
+  paid_amount: '0',
   status: 'new', notes: '', delivery_date: '',
 }
 
@@ -32,6 +33,7 @@ export default function AdminManualOrderPage() {
             _unit_price: String(unitPrice),
             quantity: String(o.quantity),
             amount: String(o.amount),
+            paid_amount: String(o.paid_amount || 0),
           })
         })
         .catch(() => {
@@ -52,12 +54,20 @@ export default function AdminManualOrderPage() {
       const { _unit_price, id: _, order_number: __, created_at: ___, updated_at: ____, ...payload } = form
       const qty = parseInt(form.quantity) || 1
       const amt = Math.round(parseFloat(form.amount) || 0)
+      let paidAmt = Math.round(parseFloat(form.paid_amount) || 0)
+
+      if (form.payment_status === 'paid') {
+        paidAmt = amt
+      } else if (form.payment_status === 'pending') {
+        paidAmt = 0
+      }
 
       if (isEdit) {
         await api.put(`/orders/manual/${id}`, {
           ...payload,
           quantity: qty,
           amount: amt,
+          paid_amount: paidAmt,
         })
         toast.success('Manual order updated!')
       } else {
@@ -65,6 +75,7 @@ export default function AdminManualOrderPage() {
           ...payload,
           quantity: qty,
           amount: amt,
+          paid_amount: paidAmt,
         })
         toast.success('Manual order created!')
       }
@@ -153,15 +164,16 @@ export default function AdminManualOrderPage() {
               <label className="label">Price/Unit (₹) *</label>
               <input
                 className="input"
-                type="number"
-                min={0}
-                step={1}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 placeholder="Per cake"
                 value={form._unit_price}
                 onChange={(e) => {
-                  const unit = Math.round(parseFloat(e.target.value) || 0)
+                  const cleanVal = e.target.value.replace(/[^0-9]/g, '')
+                  const unit = Math.round(parseFloat(cleanVal) || 0)
                   const qty = parseInt(form.quantity) || 1
-                  setForm((f: any) => ({ ...f, _unit_price: e.target.value, amount: String(unit * qty) }))
+                  setForm((f: any) => ({ ...f, _unit_price: cleanVal, amount: String(unit * qty) }))
                 }}
                 required
               />
@@ -170,14 +182,15 @@ export default function AdminManualOrderPage() {
               <label className="label">Quantity</label>
               <input
                 className="input"
-                type="number"
-                min={1}
-                step={1}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={form.quantity}
                 onChange={(e) => {
-                  const qty = parseInt(e.target.value) || 1
+                  const cleanVal = e.target.value.replace(/[^0-9]/g, '')
+                  const qty = parseInt(cleanVal) || 1
                   const unit = Math.round(parseFloat(form._unit_price) || 0)
-                  setForm((f: any) => ({ ...f, quantity: e.target.value, amount: String(unit * qty) }))
+                  setForm((f: any) => ({ ...f, quantity: cleanVal, amount: String(unit * qty) }))
                 }}
               />
             </div>
@@ -185,9 +198,14 @@ export default function AdminManualOrderPage() {
               <label className="label">Total (₹)</label>
               <input
                 className="input bg-gray-50 font-bold text-primary-600"
-                type="number"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={form.amount}
-                onChange={(e) => setForm((f: any) => ({ ...f, amount: e.target.value }))}
+                onChange={(e) => {
+                  const cleanVal = e.target.value.replace(/[^0-9]/g, '')
+                  setForm((f: any) => ({ ...f, amount: cleanVal }))
+                }}
                 placeholder="Auto-filled"
                 required
               />
@@ -200,12 +218,38 @@ export default function AdminManualOrderPage() {
           </div>
           <div>
             <label className="label">Payment</label>
-            <select className="input" value={form.payment_status} onChange={set('payment_status')}>
+            <select className="input font-semibold" value={form.payment_status} onChange={set('payment_status')}>
               <option value="pending">Pending</option>
               <option value="paid">Paid</option>
               <option value="half">Half Payment</option>
             </select>
           </div>
+
+          {form.payment_status === 'half' && (
+            <div className="grid grid-cols-2 gap-3 p-3 bg-blue-50/30 border border-blue-100 rounded-2xl">
+              <div>
+                <label className="label text-blue-700 font-bold">Paid Amount (₹) *</label>
+                <input
+                  className="input font-bold text-blue-600 bg-white"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={form.paid_amount || ''}
+                  onChange={(e) => {
+                    const cleanVal = e.target.value.replace(/[^0-9]/g, '')
+                    setForm((f: any) => ({ ...f, paid_amount: cleanVal }))
+                  }}
+                  required
+                />
+              </div>
+              <div>
+                <label className="label text-gray-500 font-bold">Remaining Balance</label>
+                <div className="input bg-gray-50/50 font-bold text-gray-700 flex items-center">
+                  ₹{Math.max(0, (Math.round(parseFloat(form.amount) || 0) - Math.round(parseFloat(form.paid_amount) || 0))).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          )}
           <div>
             <label className="label">Notes</label>
             <textarea className="input resize-none" rows={2} value={form.notes} onChange={set('notes')} placeholder="Any special notes…" />
