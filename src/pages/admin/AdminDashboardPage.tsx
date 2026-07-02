@@ -18,6 +18,7 @@ export default function AdminDashboardPage() {
     return getLocalYMD(d)
   })
   const [endDate, setEndDate] = useState<string>(() => getLocalYMD())
+  const [weightFilter, setWeightFilter] = useState('')
 
   // General dashboard stats
   const { data: stats, isLoading: loadStats } = useQuery<DashboardStats>({
@@ -36,7 +37,7 @@ export default function AdminDashboardPage() {
     isFetchingNextPage,
     isLoading: loadOrders,
   } = useInfiniteQuery({
-    queryKey: ['dateOrders', startDate, endDate],
+    queryKey: ['dateOrders', startDate, endDate, weightFilter],
     queryFn: ({ pageParam = 1 }) =>
       api.get('/orders/manual/all', {
         params: {
@@ -44,6 +45,7 @@ export default function AdminDashboardPage() {
           per_page: 10,
           start_date: startDate,
           end_date: endDate,
+          weight: weightFilter || undefined,
         },
       }).then((r) => r.data),
     getNextPageParam: (last: any) => (last.page < last.pages ? last.page + 1 : undefined),
@@ -76,6 +78,37 @@ export default function AdminDashboardPage() {
       return sum + (Number(order.amount) || 0)
     } else if (order.payment_status === 'half') {
       return sum + ((Number(order.amount) || 0) / 2)
+    }
+    return sum
+  }, 0)
+
+  // Parse weight string to kg helper
+  const parseWeightToKg = (weightStr: string): number => {
+    if (!weightStr) return 0
+    const clean = weightStr.toLowerCase().trim()
+    const match = clean.match(/^([\d.]+)\s*(kg|g)/)
+    if (match) {
+      const val = parseFloat(match[1])
+      const unit = match[2]
+      if (unit === 'kg') return val
+      if (unit === 'g') return val / 1000
+    }
+    return 1 // Default to 1kg if unparseable
+  }
+
+  // Calculate total weight of placed orders
+  const totalWeightKg = dateOrders.reduce((sum: number, order: any) => {
+    const wt = parseWeightToKg(order.weight || '1kg')
+    const qty = Number(order.quantity) || 1
+    return sum + (wt * qty)
+  }, 0)
+
+  // Calculate pending weight of pending or half-payment orders
+  const pendingWeightKg = dateOrders.reduce((sum: number, order: any) => {
+    if (order.payment_status === 'pending' || order.payment_status === 'half') {
+      const wt = parseWeightToKg(order.weight || '1kg')
+      const qty = Number(order.quantity) || 1
+      return sum + (wt * qty)
     }
     return sum
   }, 0)
@@ -146,6 +179,32 @@ export default function AdminDashboardPage() {
             />
           </div>
         </div>
+
+        <div className="flex flex-col gap-1 pt-2 border-t border-gray-100">
+          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">Filter by Weight</span>
+          <select
+            value={weightFilter}
+            onChange={(e) => setWeightFilter(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-semibold text-gray-600 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
+          >
+            <option value="">All Weights</option>
+            <option value="500g">500g</option>
+            <option value="1kg">1kg</option>
+            <option value="1.5kg">1.5kg</option>
+            <option value="2kg">2kg</option>
+            <option value="2.5kg">2.5kg</option>
+            <option value="3kg">3kg</option>
+            <option value="3.5kg">3.5kg</option>
+            <option value="4kg">4kg</option>
+            <option value="4.5kg">4.5kg</option>
+            <option value="5kg">5kg</option>
+            <option value="6kg">6kg</option>
+            <option value="7kg">7kg</option>
+            <option value="8kg">8kg</option>
+            <option value="9kg">9kg</option>
+            <option value="10kg">10kg</option>
+          </select>
+        </div>
       </div>
 
       {/* Date Specific Stats Card */}
@@ -155,7 +214,10 @@ export default function AdminDashboardPage() {
           <div className="absolute -right-1 -bottom-1 text-4xl opacity-15 select-none pointer-events-none">
             <ShoppingBag size={40} />
           </div>
-          <p className="text-2xl font-extrabold">{totalOrdersCount}</p>
+          <div>
+            <p className="text-2xl font-extrabold">{totalOrdersCount}</p>
+            <p className="text-[9px] font-semibold opacity-90">{totalWeightKg} kg total</p>
+          </div>
           <p className="text-[9px] font-bold uppercase tracking-wider opacity-90">Orders</p>
         </div>
 
@@ -172,7 +234,7 @@ export default function AdminDashboardPage() {
         <div className="card p-3 bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-soft relative overflow-hidden flex flex-col justify-between min-h-[96px]">
           <div>
             <p className="text-xl font-extrabold">₹{pendingRevenue.toLocaleString()}</p>
-            <p className="text-[9px] font-semibold opacity-90 mt-0.5">{pendingOrdersCount} pending</p>
+            <p className="text-[9px] font-semibold opacity-90 mt-0.5">{pendingOrdersCount} pending • {pendingWeightKg} kg</p>
           </div>
           <p className="text-[9px] font-bold uppercase tracking-wider opacity-90">Pending</p>
         </div>
