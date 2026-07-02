@@ -13,6 +13,11 @@ const CATEGORIES_QUERY = () => api.get('/categories/all').then((r) => r.data)
 const FLAVORS = ['Chocolate', 'Black Forest', 'Butterscotch', 'Vanilla', 'Pineapple', 'Strawberry', 'Red Velvet', 'Blueberry', 'Mango', 'Coffee', 'Mixed Fruit']
 const SHAPES = ['Round', 'Square', 'Heart', 'Rectangle', 'Custom']
 const WEIGHTS = ['500g', '1kg', '1.5kg', '2kg', '3kg', 'Custom Weight']
+const CUSTOM_WEIGHT_OPTIONS = [
+  '1kg', '1.5kg', '2kg', '2.5kg', '3kg', '3.5kg', '4kg', '4.5kg',
+  '5kg', '5.5kg', '6kg', '6.5kg', '7kg', '7.5kg', '8kg', '8.5kg',
+  '9kg', '9.5kg', '10kg'
+]
 
 const blank = {
   name: '', short_description: '', full_description: '',
@@ -20,9 +25,48 @@ const blank = {
   weight_options: JSON.stringify(['500g', '1kg', '1.5kg', '2kg']),
   price_base_weight: '500g',
   original_price: '', selling_price: '', discount_percent: '0',
-  preparation_time: '24 hours',
+  preparation_time: '3 hours',
   storage_instructions: 'Store in refrigerator. Best consumed within 2 days.',
   is_customizable: false, is_available: true, is_best_seller: false, is_trending: false, is_new_arrival: true,
+}
+
+function parsePrepTime(timeStr: string = ''): { hours: number; minutes: number } {
+  const clean = timeStr.toLowerCase().trim()
+  const hrMatch = clean.match(/(\d+)\s*(?:hour|hr)/)
+  const minMatch = clean.match(/(\d+)\s*(?:min)/)
+  const hours = hrMatch ? parseInt(hrMatch[1], 10) : 0
+  const minutes = minMatch ? parseInt(minMatch[1], 10) : 0
+  if (!hrMatch && !minMatch) {
+    const numMatch = clean.match(/^(\d+)$/)
+    if (numMatch) {
+      return { hours: parseInt(numMatch[1], 10), minutes: 0 }
+    }
+  }
+  return { hours, minutes }
+}
+
+function formatPrepTime(hours: number, minutes: number): string {
+  if (hours === 0 && minutes === 0) return '3 hours'
+  const parts = []
+  if (hours > 0) {
+    parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`)
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes} mins`)
+  }
+  return parts.join(' ')
+}
+
+function parseKg(str: string): number {
+  const clean = str.toLowerCase().trim()
+  const match = clean.match(/^([\d.]+)\s*(kg|g)/)
+  if (match) {
+    const val = parseFloat(match[1])
+    const unit = match[2]
+    if (unit === 'kg') return val
+    if (unit === 'g') return val / 1000
+  }
+  return 0.5
 }
 
 // Sub-components declared outside to prevent component re-creation and input focus loss bugs
@@ -134,7 +178,7 @@ export default function AdminProductFormPage() {
         selling_price: product.selling_price.toString(),
         discount_percent: product.discount_percent.toString(),
         price_base_weight: product.price_base_weight || '500g',
-        preparation_time: product.preparation_time || '24 hours',
+        preparation_time: product.preparation_time || '3 hours',
         serves: product.serves || '6-8 people',
         storage_instructions: product.storage_instructions || '',
         is_customizable: product.is_customizable,
@@ -157,12 +201,28 @@ export default function AdminProductFormPage() {
   const toggle = (k: string) => setForm((f: any) => ({ ...f, [k]: !f[k] }))
 
   const toggleWeight = (w: string) => {
-    const next = selectedWeights.includes(w)
-      ? selectedWeights.filter((x) => x !== w)
-      : [...selectedWeights, w]
+    const isSelecting = !selectedWeights.includes(w)
+    const next = isSelecting
+      ? [...selectedWeights, w]
+      : selectedWeights.filter((x) => x !== w)
     setSelectedWeights(next)
     setForm((f: any) => {
-      const nextBaseWeightOptions = next.filter((x) => x !== 'Custom Weight')
+      const nextBaseWeightOptions = (() => {
+        const checkedStandard = next.filter((x) => x !== 'Custom Weight')
+        const opts = next.includes('Custom Weight')
+          ? Array.from(new Set([...checkedStandard, ...CUSTOM_WEIGHT_OPTIONS]))
+          : checkedStandard
+        
+        // Filter out weights lower than the minimum checked standard weight
+        const minWeightKg = checkedStandard.length > 0
+          ? checkedStandard.reduce((min, currentStr) => {
+              const kg = parseKg(currentStr)
+              return kg < min ? kg : min
+            }, 999)
+          : 0
+        const filtered = opts.filter((opt) => parseKg(opt) >= minWeightKg)
+        return [...filtered].sort((a, b) => parseKg(a) - parseKg(b))
+      })()
       let nextBaseWeight = f.price_base_weight
       if (nextBaseWeightOptions.length > 0 && !nextBaseWeightOptions.includes(f.price_base_weight)) {
         nextBaseWeight = nextBaseWeightOptions[0]
@@ -439,14 +499,28 @@ export default function AdminProductFormPage() {
                 value={form.price_base_weight}
                 onChange={set('price_base_weight')}
               >
-                {(selectedWeights.filter(w => w !== 'Custom Weight').length > 0
-                  ? selectedWeights.filter(w => w !== 'Custom Weight')
-                  : ['500g', '1kg', '1.5kg', '2kg', '3kg']
-                ).map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
+                {(() => {
+                  const checkedStandard = selectedWeights.filter((w) => w !== 'Custom Weight')
+                  const options = selectedWeights.includes('Custom Weight')
+                    ? Array.from(new Set([...checkedStandard, ...CUSTOM_WEIGHT_OPTIONS]))
+                    : (checkedStandard.length > 0 ? checkedStandard : ['500g', '1kg', '1.5kg', '2kg', '3kg'])
+                  
+                  // Filter out weights lower than the minimum checked standard weight
+                  const minWeightKg = checkedStandard.length > 0
+                    ? checkedStandard.reduce((min, currentStr) => {
+                        const kg = parseKg(currentStr)
+                        return kg < min ? kg : min
+                      }, 999)
+                    : 0
+                  
+                  const filteredOptions = options.filter((opt) => parseKg(opt) >= minWeightKg)
+                  const sortedOptions = [...filteredOptions].sort((a, b) => parseKg(a) - parseKg(b))
+                  return sortedOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))
+                })()}
               </select>
             </Field>
           </div>
@@ -458,13 +532,43 @@ export default function AdminProductFormPage() {
           <Toggle label="Mark as Best Seller" value={form.is_best_seller} onToggle={() => toggle('is_best_seller')} />
           <Toggle label="Customizable" value={form.is_customizable} onToggle={() => toggle('is_customizable')} />
           <div className="grid grid-cols-2 gap-3 pt-2">
-            <Field label="Ready In (Time)">
-              <input
-                className="input"
-                value={form.preparation_time}
-                onChange={set('preparation_time')}
-                placeholder="e.g. 24 hours, 2 days"
-              />
+            <Field label="Ready In (Preparation Time)">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <select
+                    className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
+                    value={parsePrepTime(form.preparation_time).hours}
+                    onChange={(e) => {
+                      const hrs = parseInt(e.target.value, 10)
+                      const mins = parsePrepTime(form.preparation_time).minutes
+                      setForm((f: any) => ({ ...f, preparation_time: formatPrepTime(hrs, mins) }))
+                    }}
+                  >
+                    {Array.from({ length: 49 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {i} {i === 1 ? 'hour' : 'hours'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 relative">
+                  <select
+                    className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
+                    value={parsePrepTime(form.preparation_time).minutes}
+                    onChange={(e) => {
+                      const hrs = parsePrepTime(form.preparation_time).hours
+                      const mins = parseInt(e.target.value, 10)
+                      setForm((f: any) => ({ ...f, preparation_time: formatPrepTime(hrs, mins) }))
+                    }}
+                  >
+                    {[0, 15, 30, 45].map((m) => (
+                      <option key={m} value={m}>
+                        {m} mins
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </Field>
             {/* <Field label="Serves">
               <input

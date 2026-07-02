@@ -195,7 +195,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Top Cakes Sold — only section shown */}
-      {stats.best_selling_products.length > 0 && (
+      {/* {stats.best_selling_products.length > 0 && (
         <div className="card p-4 border border-gray-100 shadow-sm">
           <h2 className="font-semibold text-gray-900 mb-3 text-sm">🏆 Top Cakes Sold</h2>
           {stats.best_selling_products.map((p, i) => (
@@ -206,7 +206,7 @@ export default function AdminDashboardPage() {
             </div>
           ))}
         </div>
-      )}
+      )} */}
     </div>
   )
 }

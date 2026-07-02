@@ -216,7 +216,7 @@ export default function ProductDetailPage() {
 
           <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: Clock, label: 'Ready in', value: product.preparation_time || '24 hrs' },
+              { icon: Clock, label: 'Ready in', value: product.preparation_time || '3 hrs' },
               // { icon: ChefHat, label: 'Type', value: product.cake_type || 'Cream Cake' },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="bg-gray-50 rounded-2xl p-3 text-center">
