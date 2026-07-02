@@ -110,7 +110,7 @@ export default function HomePage() {
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[80px] opacity-20 select-none pointer-events-none">🎉</div>
           <p className="text-sm font-semibold opacity-90">Limited Time</p>
           <h3 className="font-display text-2xl font-bold mt-1">Fresh & Eggless</h3>
-          <p className="text-sm opacity-80 mt-1">Order before 6 PM for same-day delivery</p>
+          <p className="text-sm opacity-80 mt-1">Order before 9 PM for same-day delivery</p>
           <Link to="/shop" className="mt-4 inline-block bg-white text-primary-500 font-bold text-sm px-5 py-2 rounded-xl shadow hover:bg-pink-50 transition-colors">
             Shop Now →
           </Link>

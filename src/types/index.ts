@@ -60,6 +60,7 @@ export interface ProductListItem {
   rating: number
   cover_image?: ProductImage
   category_id?: number
+  price_base_weight?: string
 }
 
 export interface PaginatedProducts {

@@ -90,8 +90,12 @@ export default function ProductCard({ product }: Props) {
           <p className="font-semibold text-gray-900 text-sm line-clamp-2 leading-tight">
             {product.name}
           </p>
-          {product.flavor && (
-            <p className="text-xs text-gray-400 mt-0.5">{product.flavor}</p>
+          {(product.flavor || product.price_base_weight) && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              {product.flavor}
+              {product.flavor && product.price_base_weight && <span className="mx-1">•</span>}
+              {product.price_base_weight}
+            </p>
           )}
           <div className="flex items-center justify-between mt-2">
             <div>

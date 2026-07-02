@@ -531,12 +531,12 @@ export default function AdminProductFormPage() {
           <Toggle label="Available for order" value={form.is_available} onToggle={() => toggle('is_available')} />
           <Toggle label="Mark as Best Seller" value={form.is_best_seller} onToggle={() => toggle('is_best_seller')} />
           <Toggle label="Customizable" value={form.is_customizable} onToggle={() => toggle('is_customizable')} />
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="pt-2">
             <Field label="Ready In (Preparation Time)">
               <div className="flex gap-2">
                 <div className="flex-1 relative">
                   <select
-                    className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
+                    className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.3rem_center] bg-no-repeat pr-6"
                     value={parsePrepTime(form.preparation_time).hours}
                     onChange={(e) => {
                       const hrs = parseInt(e.target.value, 10)
@@ -553,7 +553,7 @@ export default function AdminProductFormPage() {
                 </div>
                 <div className="flex-1 relative">
                   <select
-                    className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10"
+                    className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.3rem_center] bg-no-repeat pr-6"
                     value={parsePrepTime(form.preparation_time).minutes}
                     onChange={(e) => {
                       const hrs = parsePrepTime(form.preparation_time).hours

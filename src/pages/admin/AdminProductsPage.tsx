@@ -91,7 +91,10 @@ export default function AdminProductsPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-gray-900 truncate">{product.name}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{product.flavor || '—'}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {product.flavor || '—'}
+                            {product.price_base_weight ? ` • ${product.price_base_weight}` : ''}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -165,7 +168,10 @@ export default function AdminProductsPage() {
                     <p className="font-semibold text-sm text-gray-900 truncate">{product.name}</p>
                     <span className="font-bold text-sm text-primary-500 flex-shrink-0">₹{product.selling_price}</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{product.flavor || '—'}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {product.flavor || '—'}
+                    {product.price_base_weight ? ` • ${product.price_base_weight}` : ''}
+                  </p>
 
                   <div className="flex flex-wrap gap-1 mt-2">
                     <span className={`badge ${product.is_available ? 'badge-green' : 'badge-gray'} text-[9px] font-bold px-2 py-0.5 rounded-lg`}>
