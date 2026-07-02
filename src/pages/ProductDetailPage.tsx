@@ -151,7 +151,7 @@ export default function ProductDetailPage() {
       <div className="page-container py-6 max-w-lg mx-auto space-y-6">
         {/* Images */}
         <div className="aspect-square rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 shadow-soft">
-          <ImageGallery images={product.images || []} altText={product.name} />
+          <ImageGallery images={product.images || []} />
         </div>
 
         {/* Content */}
