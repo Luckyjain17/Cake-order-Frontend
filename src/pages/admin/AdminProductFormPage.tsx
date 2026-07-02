@@ -130,6 +130,7 @@ export default function AdminProductFormPage() {
   const isEdit = !!id
   const [form, setForm] = useState<any>(blank)
   const [images, setImages] = useState<ProductImage[]>([])
+  const [localFiles, setLocalFiles] = useState<{ id: string; file: File }[]>([])
   const [savedProductId, setSavedProductId] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedWeights, setSelectedWeights] = useState<string[]>(['500g', '1kg', '1.5kg', '2kg'])
@@ -312,12 +313,23 @@ export default function AdminProductFormPage() {
   }
 
 
+  const clearLocalFiles = () => {
+    images.forEach((img) => {
+      if (typeof img.id === 'string' && img.id.startsWith('local-')) {
+        URL.revokeObjectURL(img.url)
+      }
+    })
+    setLocalFiles([])
+  }
+
   const handleDone = () => {
+    clearLocalFiles()
     setForm(blank)
     navigate('/admin/products')
   }
 
   const handleCancel = () => {
+    clearLocalFiles()
     setForm(blank)
     navigate('/admin/products')
   }
@@ -354,7 +366,33 @@ export default function AdminProductFormPage() {
         toast.success('Product updated!')
         handleDone()
       } else {
-        await api.post('/products/', payload)
+        const { data: newProduct } = await api.post('/products/', payload)
+        
+        if (localFiles.length > 0 && newProduct?.id) {
+          const formData = new FormData()
+          const sortedLocalFiles = images
+            .filter((img) => typeof img.id === 'string' && img.id.startsWith('local-'))
+            .map((img) => localFiles.find((lf) => lf.id === img.id)?.file)
+            .filter((file): file is File => !!file)
+            
+          sortedLocalFiles.forEach((file) => {
+            formData.append('files', file)
+          })
+          formData.append('image_type', 'other')
+          
+          const { data: uploadedImages } = await api.post(`/images/upload/${newProduct.id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          })
+          
+          const firstImage = images[0]
+          if (firstImage && typeof firstImage.id === 'string' && firstImage.id.startsWith('local-')) {
+            const firstUploaded = uploadedImages[0]
+            if (firstUploaded) {
+              await api.patch(`/images/${firstUploaded.id}/set-cover`).catch(() => {})
+            }
+          }
+        }
+
         queryClient.invalidateQueries({ queryKey: ['adminProducts'] })
         queryClient.invalidateQueries({ queryKey: ['featured'] })
         queryClient.invalidateQueries({ queryKey: ['trending'] })
@@ -388,15 +426,15 @@ export default function AdminProductFormPage() {
         </div>
 
         {/* Product Images */}
-        {savedProductId && (
-          <Section title="Product Images">
-            <ImageUploader
-              productId={savedProductId}
-              images={images}
-              onImagesChange={setImages}
-            />
-          </Section>
-        )}
+        <Section title="Product Images">
+          <ImageUploader
+            productId={savedProductId || undefined}
+            images={images}
+            onImagesChange={setImages}
+            localFiles={localFiles}
+            onLocalFilesChange={setLocalFiles}
+          />
+        </Section>
 
         {/* Basic Info */}
         <Section title="Basic Information">

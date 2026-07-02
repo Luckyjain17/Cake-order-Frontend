@@ -173,7 +173,7 @@ export default function ProductDetailPage() {
     <div className="pb-nav">
       <div className="page-container py-6 max-w-lg mx-auto space-y-6">
         {/* Images */}
-        <div className="aspect-square rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 shadow-soft">
+        <div>
           <ImageGallery images={product.images || []} />
         </div>
 

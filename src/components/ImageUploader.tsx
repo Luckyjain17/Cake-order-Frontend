@@ -15,9 +15,11 @@ import api, { getImageUrl } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface Props {
-  productId: number
+  productId?: number
   images: ProductImage[]
   onImagesChange: (images: ProductImage[]) => void
+  localFiles?: { id: string; file: File }[]
+  onLocalFilesChange?: (files: { id: string; file: File }[]) => void
 }
 
 function SortableImage({
@@ -99,7 +101,7 @@ function SortableImage({
   )
 }
 
-export default function ImageUploader({ productId, images, onImagesChange }: Props) {
+export default function ImageUploader({ productId, images, onImagesChange, localFiles, onLocalFilesChange }: Props) {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [optionsImage, setOptionsImage] = useState<ProductImage | null>(null)
@@ -111,6 +113,31 @@ export default function ImageUploader({ productId, images, onImagesChange }: Pro
 
   const onDrop = useCallback(
     async (files: File[]) => {
+      if (!productId) {
+        const newImages: ProductImage[] = []
+        const newLocalFiles: { id: string; file: File }[] = []
+        
+        files.forEach((file) => {
+          const fakeId = `local-${Math.random().toString(36).substr(2, 9)}`
+          const url = URL.createObjectURL(file)
+          newImages.push({
+            id: fakeId as any,
+            url,
+            thumbnail_url: url,
+            sort_order: images.length + newImages.length,
+            is_cover: images.length + newImages.length === 0,
+            cloudinary_public_id: '',
+          })
+          newLocalFiles.push({ id: fakeId, file })
+        })
+        
+        onImagesChange([...images, ...newImages])
+        if (onLocalFilesChange) {
+          onLocalFilesChange([...(localFiles || []), ...newLocalFiles])
+        }
+        return
+      }
+
       setUploading(true)
       try {
         const formData = new FormData()
@@ -127,7 +154,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Pro
         setUploading(false)
       }
     },
-    [productId, images, onImagesChange],
+    [productId, images, onImagesChange, localFiles, onLocalFilesChange],
   )
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -137,7 +164,20 @@ export default function ImageUploader({ productId, images, onImagesChange }: Pro
     maxSize: 10 * 1024 * 1024,
   })
 
-  const handleDelete = async (imageId: number) => {
+  const handleDelete = async (imageId: any) => {
+    if (typeof imageId === 'string' && imageId.startsWith('local-')) {
+      const img = images.find((i) => i.id === imageId)
+      if (img) {
+        URL.revokeObjectURL(img.url)
+      }
+      onImagesChange(images.filter((i) => i.id !== imageId))
+      if (onLocalFilesChange && localFiles) {
+        onLocalFilesChange(localFiles.filter((f) => f.id !== imageId))
+      }
+      toast.success('Image removed')
+      return
+    }
+
     try {
       await api.delete(`/images/${imageId}`)
       onImagesChange(images.filter((i) => i.id !== imageId))
@@ -147,7 +187,13 @@ export default function ImageUploader({ productId, images, onImagesChange }: Pro
     }
   }
 
-  const handleSetCover = async (imageId: number) => {
+  const handleSetCover = async (imageId: any) => {
+    if (typeof imageId === 'string' && imageId.startsWith('local-')) {
+      onImagesChange(images.map((i) => ({ ...i, is_cover: i.id === imageId })))
+      toast.success('Cover image updated')
+      return
+    }
+
     try {
       await api.patch(`/images/${imageId}/set-cover`)
       onImagesChange(images.map((i) => ({ ...i, is_cover: i.id === imageId })))
@@ -167,6 +213,9 @@ export default function ImageUploader({ productId, images, onImagesChange }: Pro
       sort_order: idx,
     }))
     onImagesChange(reordered)
+
+    if (!productId) return
+
     await api.patch('/images/reorder', {
       images: reordered.map((i) => ({ id: i.id, sort_order: i.sort_order })),
     }).catch(() => {})
