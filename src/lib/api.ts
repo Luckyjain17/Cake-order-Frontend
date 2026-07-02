@@ -39,4 +39,15 @@ api.interceptors.response.use(
   }
 );
 
+export function getImageUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const apiBase = import.meta.env.VITE_API_URL || "";
+  const backendBase = apiBase.replace(/\/api$/, "");
+  const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+  return `${backendBase}${cleanUrl}`;
+}
+
 export default api;
