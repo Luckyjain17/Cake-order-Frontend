@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useCart } from '@/context/CartContext'
 import { motion } from 'framer-motion'
-import api from '@/lib/api'
+import api, { getImageUrl } from '@/lib/api'
 import toast from 'react-hot-toast'
 import { useQuery } from '@tanstack/react-query'
 
@@ -31,11 +31,17 @@ export default function CheckoutPage() {
     return new Date() < reopenDate
   })()
 
+  const { data: qrSetting } = useQuery({
+    queryKey: ['settings', 'upi_qr_code'],
+    queryFn: () => api.get('/settings/upi_qr_code').then((r) => r.data).catch(() => null),
+  })
+  const customQrUrl = qrSetting?.value ? getImageUrl(qrSetting.value) : undefined
+
   const { data: upiIdSetting } = useQuery({
     queryKey: ['settings', 'upi_id'],
     queryFn: () => api.get('/settings/upi_id').then((r) => r.data).catch(() => null),
   })
-  const isUpiOffline = !upiIdSetting?.value // empty/unset or not exists
+  const isUpiOffline = !upiIdSetting?.value && !customQrUrl
 
   const { data: whatsappSetting } = useQuery({
     queryKey: ['settings', 'whatsapp_number'],

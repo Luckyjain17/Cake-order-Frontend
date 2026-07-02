@@ -161,7 +161,14 @@ export default function AdminProductFormPage() {
       ? selectedWeights.filter((x) => x !== w)
       : [...selectedWeights, w]
     setSelectedWeights(next)
-    setForm((f: any) => ({ ...f, weight_options: JSON.stringify(next) }))
+    setForm((f: any) => {
+      const nextBaseWeightOptions = next.filter((x) => x !== 'Custom Weight')
+      let nextBaseWeight = f.price_base_weight
+      if (nextBaseWeightOptions.length > 0 && !nextBaseWeightOptions.includes(f.price_base_weight)) {
+        nextBaseWeight = nextBaseWeightOptions[0]
+      }
+      return { ...f, weight_options: JSON.stringify(next), price_base_weight: nextBaseWeight }
+    })
   }
 
   const handleAddCategorySubmit = async (e: React.FormEvent) => {
@@ -428,16 +435,18 @@ export default function AdminProductFormPage() {
             </Field>
             <Field label="Base Weight">
               <select
-                className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-gray-50 border border-gray-200"
+                className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-gray-50 border border-gray-200"
                 value={form.price_base_weight}
                 onChange={set('price_base_weight')}
               >
-                <option value="250g">250g</option>
-                <option value="500g">500g</option>
-                <option value="1kg">1kg</option>
-                <option value="1.5kg">1.5kg</option>
-                <option value="2kg">2kg</option>
-                <option value="3kg">3kg</option>
+                {(selectedWeights.filter(w => w !== 'Custom Weight').length > 0
+                  ? selectedWeights.filter(w => w !== 'Custom Weight')
+                  : ['500g', '1kg', '1.5kg', '2kg', '3kg']
+                ).map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
               </select>
             </Field>
           </div>

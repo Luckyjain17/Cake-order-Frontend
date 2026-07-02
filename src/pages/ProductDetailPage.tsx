@@ -11,18 +11,19 @@ import { useCart } from '@/context/CartContext'
 import ProductCarousel from '@/components/ProductCarousel'
 import { useQuery as useQ } from '@tanstack/react-query'
 
-function getWeightMultiplier(selected: string, base: string = '500g'): number {
-  const parseKg = (str: string): number => {
-    const clean = str.toLowerCase().trim()
-    const match = clean.match(/^([\d.]+)\s*(kg|g)/)
-    if (match) {
-      const val = parseFloat(match[1])
-      const unit = match[2]
-      if (unit === 'kg') return val
-      if (unit === 'g') return val / 1000
-    }
-    return 0.5
+function parseKg(str: string): number {
+  const clean = str.toLowerCase().trim()
+  const match = clean.match(/^([\d.]+)\s*(kg|g)/)
+  if (match) {
+    const val = parseFloat(match[1])
+    const unit = match[2]
+    if (unit === 'kg') return val
+    if (unit === 'g') return val / 1000
   }
+  return 0.5
+}
+
+function getWeightMultiplier(selected: string, base: string = '500g'): number {
   return parseKg(selected) / parseKg(base)
 }
 
@@ -86,6 +87,16 @@ export default function ProductDetailPage() {
       const w = product.weight_options ? JSON.parse(product.weight_options) : WEIGHTS
       if (w.length > 0) {
         setSelectedWeight(w[0])
+        const maxW = w.reduce((max: number, currentStr: string) => {
+          const val = parseKg(currentStr)
+          return val > max ? val : max
+        }, 0)
+        const firstLarger = CUSTOM_WEIGHT_OPTIONS.find((opt) => parseKg(opt) > maxW)
+        if (firstLarger) {
+          setCustomWeight(firstLarger)
+        } else {
+          setCustomWeight('3.5kg')
+        }
       }
     }
   }, [product])
@@ -109,6 +120,15 @@ export default function ProductDetailPage() {
   const displayWeights = (product.is_customizable && !weights.includes('Custom Weight'))
     ? [...weights, 'Custom Weight']
     : weights
+
+  const maxWeightKg = weights.reduce((max: number, w: string) => {
+    const kg = parseKg(w)
+    return kg > max ? kg : max
+  }, 0)
+
+  const filteredCustomWeightOptions = CUSTOM_WEIGHT_OPTIONS.filter((opt) => {
+    return parseKg(opt) > maxWeightKg
+  })
 
   const multiplier = getWeightMultiplier(selectedWeight, product.price_base_weight)
   const multipliedSellingPrice = product.selling_price * multiplier
@@ -253,7 +273,7 @@ export default function ProductDetailPage() {
                     </button>
                     {isDropdownOpen && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-150 rounded-xl shadow-lifted z-10 max-h-40 overflow-y-auto p-1 space-y-1">
-                        {CUSTOM_WEIGHT_OPTIONS.map((opt) => (
+                        {filteredCustomWeightOptions.map((opt) => (
                           <button
                             key={opt}
                             type="button"

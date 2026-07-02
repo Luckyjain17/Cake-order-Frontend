@@ -57,7 +57,7 @@ export default function PaymentPage() {
   })
 
   const customQrUrl = getImageUrl(qrSetting?.value || undefined)
-  const isUpiOffline = upiIdSetting ? upiIdSetting.value === '' : false
+  const isUpiOffline = upiIdSetting ? (upiIdSetting.value === '' && !customQrUrl) : false
   const activeUpiId = upiIdSetting?.value === null ? '8269412418@ybl' : (upiIdSetting?.value || '')
   const activePayeeName = payeeNameSetting?.value === null ? "Manu's Cake Shop" : (payeeNameSetting?.value || '')
   const activeWhatsappNumber = whatsappSetting?.value || import.meta.env.VITE_WHATSAPP_NUMBER || '918269412418'
