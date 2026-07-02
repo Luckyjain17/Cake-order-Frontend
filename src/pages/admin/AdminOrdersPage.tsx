@@ -8,16 +8,22 @@ import toast from 'react-hot-toast'
 
 export default function AdminOrdersPage() {
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [sourceFilter, setSourceFilter] = useState('')
+  const [paymentFilter, setPaymentFilter] = useState('')
   const qc = useQueryClient()
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
-    queryKey: ['manualOrders', search],
+    queryKey: ['manualOrders', search, statusFilter, sourceFilter, paymentFilter],
     queryFn: ({ pageParam = 1 }) =>
       api.get('/orders/manual/all', {
         params: {
           page: pageParam,
           per_page: 10,
           search: search || undefined,
+          status: statusFilter || undefined,
+          order_source: sourceFilter || undefined,
+          payment_status: paymentFilter || undefined,
         },
       }).then((r) => r.data),
     getNextPageParam: (last: any) => (last.page < last.pages ? last.page + 1 : undefined),
@@ -64,6 +70,48 @@ export default function AdminOrdersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+      </div>
+
+      {/* Filter Selects */}
+      <div className="grid grid-cols-3 gap-2">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
+        >
+          <option value="">All Statuses</option>
+          <option value="new">New</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="processing">Processing</option>
+          <option value="ready">Ready</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        
+        <select
+          value={sourceFilter}
+          onChange={(e) => setSourceFilter(e.target.value)}
+          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
+        >
+          <option value="">All Sources</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="phone">Phone</option>
+          <option value="walkin">Walk-in</option>
+          <option value="instagram">Instagram</option>
+          <option value="facebook">Facebook</option>
+          <option value="other">Other</option>
+        </select>
+
+        <select
+          value={paymentFilter}
+          onChange={(e) => setPaymentFilter(e.target.value)}
+          className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
+        >
+          <option value="">All Payments</option>
+          <option value="pending">Pending</option>
+          <option value="paid">Paid</option>
+          <option value="half">Half Payment</option>
+        </select>
       </div>
 
       {/* Orders List */}
@@ -115,7 +163,18 @@ export default function AdminOrdersPage() {
 
             {/* Meta Details: Source, Date */}
             <div className="flex justify-between items-center text-xs text-gray-400">
-              <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-lg capitalize">{order.order_source}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-lg capitalize">{order.order_source}</span>
+                <span className={`px-2 py-0.5 rounded-lg font-bold text-[9px] uppercase tracking-wider border ${
+                  order.payment_status === 'paid'
+                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                    : order.payment_status === 'half'
+                    ? 'bg-blue-50 text-blue-600 border-blue-100'
+                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                }`}>
+                  {order.payment_status === 'half' ? 'Half Payment' : order.payment_status}
+                </span>
+              </div>
               {order.delivery_date && <span>📅 {order.delivery_date}</span>}
             </div>
 

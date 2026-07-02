@@ -173,26 +173,13 @@ export default function AdminManualOrderPage() {
             <label className="label">Delivery Date</label>
             <input className="input" type="date" value={form.delivery_date} onChange={set('delivery_date')} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Payment</label>
-              <select className="input" value={form.payment_status} onChange={set('payment_status')}>
-                <option value="pending">Pending</option>
-                <option value="paid">Paid</option>
-                <option value="partial">Partial</option>
-              </select>
-            </div>
-            <div>
-              <label className="label">Status</label>
-              <select className="input" value={form.status} onChange={set('status')}>
-                <option value="new">New</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="processing">Processing</option>
-                <option value="ready">Ready</option>
-                <option value="delivered">Delivered</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
+          <div>
+            <label className="label">Payment</label>
+            <select className="input" value={form.payment_status} onChange={set('payment_status')}>
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="half">Half Payment</option>
+            </select>
           </div>
           <div>
             <label className="label">Notes</label>

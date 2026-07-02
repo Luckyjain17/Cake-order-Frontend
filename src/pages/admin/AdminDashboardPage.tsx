@@ -60,6 +60,11 @@ export default function AdminDashboardPage() {
     0
   )
 
+  // Pending manual orders in range (payment_status is pending)
+  const pendingOrdersCount = dateOrders.filter(
+    (order: any) => order.payment_status === 'pending'
+  ).length
+
   // Infinite scroll sentinel for orders list
   const ordersLoaderRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -129,28 +134,29 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Date Specific Stats Card */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         {/* Total Orders Card */}
-        <div className="card p-4 bg-gradient-to-br from-primary-500 to-pink-400 text-white shadow-soft relative overflow-hidden">
-          <div className="absolute -right-2 -bottom-2 text-6xl opacity-15 select-none pointer-events-none">
-            <ShoppingBag size={64} />
+        <div className="card p-3 bg-gradient-to-br from-primary-500 to-pink-400 text-white shadow-soft relative overflow-hidden flex flex-col justify-between min-h-[96px]">
+          <div className="absolute -right-1 -bottom-1 text-4xl opacity-15 select-none pointer-events-none">
+            <ShoppingBag size={40} />
           </div>
-          <p className="text-3xl font-bold">{totalOrdersCount}</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider opacity-90 mt-1">Orders Placed</p>
+          <p className="text-2xl font-extrabold">{totalOrdersCount}</p>
+          <p className="text-[9px] font-bold uppercase tracking-wider opacity-90">Orders</p>
         </div>
 
         {/* Total Revenue Card — sums loaded orders */}
-        <div className="card p-4 bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-soft relative overflow-hidden">
-          <div className="absolute -right-2 -bottom-2 text-6xl opacity-15 select-none pointer-events-none">
-            <IndianRupee size={64} />
+        <div className="card p-3 bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-soft relative overflow-hidden flex flex-col justify-between min-h-[96px]">
+          <div className="absolute -right-1 -bottom-1 text-4xl opacity-15 select-none pointer-events-none">
+            <IndianRupee size={40} />
           </div>
-          <p className="text-2xl font-bold">₹{rangeRevenue.toLocaleString()}</p>
-          <p className="text-[10px] font-bold uppercase tracking-wider opacity-90 mt-1">
-            Total Revenue
-            {hasNextPage && (
-              <span className="block normal-case font-normal opacity-75 mt-0.5">Load all for full total</span>
-            )}
-          </p>
+          <p className="text-xl font-extrabold">₹{rangeRevenue.toLocaleString()}</p>
+          <p className="text-[9px] font-bold uppercase tracking-wider opacity-90">Revenue</p>
+        </div>
+
+        {/* Pending Orders Card */}
+        <div className="card p-3 bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-soft relative overflow-hidden flex flex-col justify-between min-h-[96px]">
+          <p className="text-2xl font-extrabold">{pendingOrdersCount}</p>
+          <p className="text-[9px] font-bold uppercase tracking-wider opacity-90">Pending</p>
         </div>
       </div>
 
