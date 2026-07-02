@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import api from '@/lib/api'
+import api, { getImageUrl } from '@/lib/api'
 import type { PaginatedProducts, ProductListItem } from '@/types'
 import { Plus, Search, Edit, Trash2, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -76,7 +76,7 @@ export default function AdminProductsPage() {
             </thead>
             <tbody className="divide-y divide-gray-50 text-sm">
               {products.map((product) => {
-                const imageUrl = product.cover_image?.thumbnail_url || product.cover_image?.url
+                const imageUrl = getImageUrl(product.cover_image?.thumbnail_url || product.cover_image?.url)
                 return (
                   <tr key={product.id} className="hover:bg-gray-50/50 transition-colors">
                     {/* Image & Title */}
@@ -148,7 +148,7 @@ export default function AdminProductsPage() {
       {products.length > 0 && (
         <div className="md:hidden space-y-3">
           {products.map((product) => {
-            const imageUrl = product.cover_image?.thumbnail_url || product.cover_image?.url
+            const imageUrl = getImageUrl(product.cover_image?.thumbnail_url || product.cover_image?.url)
             return (
               <div key={product.id} className="card p-3.5 flex gap-3.5 items-center border border-gray-100 shadow-sm bg-white">
                 {/* Image */}

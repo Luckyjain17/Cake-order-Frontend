@@ -4,7 +4,7 @@ import { ShoppingBag, Clock, Users, ChefHat, ChevronDown } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
-import api from '@/lib/api'
+import api, { getImageUrl } from '@/lib/api'
 import type { Product } from '@/types'
 import ImageGallery from '@/components/ImageGallery'
 import { useCart } from '@/context/CartContext'
@@ -100,7 +100,7 @@ export default function ProductDetailPage() {
       product_id: product.id,
       name: product.name,
       slug: product.slug,
-      image_url: product.cover_image?.thumbnail_url || product.cover_image?.url,
+      image_url: getImageUrl(product.cover_image?.thumbnail_url || product.cover_image?.url),
       weight: selectedWeight,
       price: multipliedSellingPrice,
       qty,

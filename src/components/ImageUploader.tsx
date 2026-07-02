@@ -11,7 +11,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { Trash2, Star, GripVertical, Upload, Loader2, X } from 'lucide-react'
 import type { ProductImage } from '@/types'
-import api from '@/lib/api'
+import api, { getImageUrl } from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -86,7 +86,7 @@ function SortableImage({
       onTouchMove={handleMove}
     >
       <img
-        src={image.thumbnail_url || image.url}
+        src={getImageUrl(image.thumbnail_url || image.url)}
         alt=""
         className="w-full h-full object-cover select-none pointer-events-none"
       />
@@ -244,7 +244,7 @@ export default function ImageUploader({ productId, images, onImagesChange }: Pro
           <div className="bg-white rounded-3xl p-5 w-full max-w-xs text-center space-y-4 shadow-lifted animate-scale-in">
             <h3 className="font-semibold text-gray-900 text-base">Image Options</h3>
             <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto bg-gray-100 border border-gray-100 shadow-sm">
-              <img src={optionsImage.thumbnail_url || optionsImage.url} alt="" className="w-full h-full object-cover" />
+              <img src={getImageUrl(optionsImage.thumbnail_url || optionsImage.url)} alt="" className="w-full h-full object-cover" />
             </div>
 
             <div className="space-y-2 pt-2">

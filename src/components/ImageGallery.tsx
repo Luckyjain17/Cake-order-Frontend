@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
 import { useState, useCallback, useEffect } from 'react'
 import type { ProductImage } from '@/types'
+import { getImageUrl } from '@/lib/api'
 
 interface Props {
   images: ProductImage[]
@@ -66,7 +67,7 @@ export default function ImageGallery({ images, initialIndex = 0, onClose, isFull
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            src={img.medium_url || img.url}
+            src={getImageUrl(img.medium_url || img.url)}
             alt={img.alt_text || 'Cake image'}
             loading="lazy"
             className="w-full h-full object-contain cursor-zoom-in"
@@ -122,7 +123,7 @@ export default function ImageGallery({ images, initialIndex = 0, onClose, isFull
               }`}
             >
               <img
-                src={thumb.thumbnail_url || thumb.url}
+                src={getImageUrl(thumb.thumbnail_url || thumb.url)}
                 alt=""
                 loading="lazy"
                 className="w-full h-full object-cover"
@@ -164,7 +165,7 @@ export default function ImageGallery({ images, initialIndex = 0, onClose, isFull
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  src={img.large_url || img.url}
+                  src={getImageUrl(img.large_url || img.url)}
                   alt={img.alt_text || ''}
                   className="max-w-full max-h-full object-contain rounded-2xl"
                 />
@@ -183,7 +184,7 @@ export default function ImageGallery({ images, initialIndex = 0, onClose, isFull
                       i === current ? 'border-white' : 'border-transparent opacity-50'
                     }`}
                   >
-                    <img src={t.thumbnail_url || t.url} alt="" className="w-full h-full object-cover" />
+                    <img src={getImageUrl(t.thumbnail_url || t.url)} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

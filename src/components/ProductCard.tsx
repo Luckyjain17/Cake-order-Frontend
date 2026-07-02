@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import type { ProductListItem } from '@/types'
 import { useCart } from '@/context/CartContext'
 import toast from 'react-hot-toast'
+import { getImageUrl } from '@/lib/api'
 
 interface Props {
   product: ProductListItem
@@ -11,7 +12,7 @@ interface Props {
 
 export default function ProductCard({ product }: Props) {
   const { addItem } = useCart()
-  const imageUrl = product.cover_image?.thumbnail_url || product.cover_image?.url
+  const imageUrl = getImageUrl(product.cover_image?.thumbnail_url || product.cover_image?.url)
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
