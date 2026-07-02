@@ -124,7 +124,7 @@ export default function AdminOrdersPage() {
           <option value="10kg">10kg</option>
         </select>
 
-        <select
+        {/* <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="input py-2 pr-6 text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-100 rounded-xl"
@@ -136,7 +136,7 @@ export default function AdminOrdersPage() {
           <option value="ready">Ready</option>
           <option value="delivered">Delivered</option>
           <option value="cancelled">Cancelled</option>
-        </select>
+        </select> */}
       </div>
 
       {/* Orders List */}
