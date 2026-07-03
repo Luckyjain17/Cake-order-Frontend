@@ -28,7 +28,6 @@ export default function AdminDashboardPage() {
     return getLocalYMD(d)
   })
   const [endDate, setEndDate] = useState<string>(() => getLocalYMD())
-  const [weightFilter, setWeightFilter] = useState('')
 
   const { data: stats, isLoading: loadStats } = useQuery<DashboardStats>({
     queryKey: ['dashboard'],
@@ -39,7 +38,7 @@ export default function AdminDashboardPage() {
   })
 
   const { data: dateOrdersData, isLoading: loadOrders } = useQuery({
-    queryKey: ['dateOrders', startDate, endDate, weightFilter],
+    queryKey: ['dateOrders', startDate, endDate],
     queryFn: () =>
       api.get('/orders/manual/all', {
         params: {
@@ -47,7 +46,6 @@ export default function AdminDashboardPage() {
           per_page: 1000,
           start_date: startDate,
           end_date: endDate,
-          weight: weightFilter || undefined,
         },
       }).then((r) => r.data),
     staleTime: 0,
@@ -194,7 +192,7 @@ export default function AdminDashboardPage() {
         <label className="label text-gray-500 font-bold flex items-center gap-1.5 text-xs">
           <Calendar size={14} /> Filter Date Range
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">Start Date</span>
             <input
@@ -216,31 +214,6 @@ export default function AdminDashboardPage() {
               onChange={(e) => setEndDate(e.target.value)}
             />
           </div>
-        </div>
-        <div className="flex flex-col gap-1 pt-2 border-t border-gray-100">
-          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">Filter by Weight</span>
-          <select
-            value={weightFilter}
-            onChange={(e) => setWeightFilter(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-semibold text-gray-600 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
-          >
-            <option value="">All Weights</option>
-            <option value="500g">500g</option>
-            <option value="1kg">1kg</option>
-            <option value="1.5kg">1.5kg</option>
-            <option value="2kg">2kg</option>
-            <option value="2.5kg">2.5kg</option>
-            <option value="3kg">3kg</option>
-            <option value="3.5kg">3.5kg</option>
-            <option value="4kg">4kg</option>
-            <option value="4.5kg">4.5kg</option>
-            <option value="5kg">5kg</option>
-            <option value="6kg">6kg</option>
-            <option value="7kg">7kg</option>
-            <option value="8kg">8kg</option>
-            <option value="9kg">9kg</option>
-            <option value="10kg">10kg</option>
-          </select>
         </div>
       </div>
 

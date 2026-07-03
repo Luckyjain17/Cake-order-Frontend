@@ -15,6 +15,31 @@ const blank = {
   status: 'new', notes: '', delivery_date: '',
 }
 
+const KG_OPTIONS = Array.from({ length: 11 }, (_, i) => i) // 0 to 10
+const GRAM_OPTIONS = Array.from({ length: 20 }, (_, i) => i * 50) // 0, 50, 100 ... 950
+
+function parseWeightParts(weight: string): { kg: number; g: number } {
+  const clean = (weight || '').toLowerCase().trim()
+  const kgMatch = clean.match(/(\d+\.?\d*)\s*kg/)
+  const gMatch = clean.match(/(\d+)\s*g(?!kg)/)
+  const kg = kgMatch ? parseFloat(kgMatch[1]) : 0
+  const totalG = gMatch ? parseInt(gMatch[1]) : 0
+  if (!kgMatch && totalG > 0) {
+    return { kg: Math.floor(totalG / 1000), g: totalG % 1000 }
+  }
+  const wholePart = Math.floor(kg)
+  const fracG = Math.round((kg - wholePart) * 1000)
+  return { kg: wholePart, g: fracG }
+}
+
+function buildWeight(kg: number, g: number): string {
+  const totalG = kg * 1000 + g
+  if (totalG === 0) return '500g'
+  if (kg === 0) return `${g}g`
+  if (g === 0) return `${kg}kg`
+  return `${kg + g / 1000}kg`
+}
+
 export default function AdminManualOrderPage() {
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
@@ -136,27 +161,41 @@ export default function AdminManualOrderPage() {
 
           <div>
             <label className="label">Weight</label>
-            <select
-              className="input font-semibold"
-              value={form.weight || '1kg'}
-              onChange={(e) => setForm((f: any) => ({ ...f, weight: e.target.value }))}
-            >
-              <option value="500g">500g</option>
-              <option value="1kg">1kg</option>
-              <option value="1.5kg">1.5kg</option>
-              <option value="2kg">2kg</option>
-              <option value="2.5kg">2.5kg</option>
-              <option value="3kg">3kg</option>
-              <option value="3.5kg">3.5kg</option>
-              <option value="4kg">4kg</option>
-              <option value="4.5kg">4.5kg</option>
-              <option value="5kg">5kg</option>
-              <option value="6kg">6kg</option>
-              <option value="7kg">7kg</option>
-              <option value="8kg">8kg</option>
-              <option value="9kg">9kg</option>
-              <option value="10kg">10kg</option>
-            </select>
+            <div className="flex gap-2 items-center">
+              {/* KG dropdown */}
+              <select
+                className="input font-semibold flex-1"
+                value={parseWeightParts(form.weight || '1kg').kg}
+                onChange={(e) => {
+                  const kg = parseInt(e.target.value)
+                  const g = parseWeightParts(form.weight || '1kg').g
+                  setForm((f: any) => ({ ...f, weight: buildWeight(kg, g) }))
+                }}
+              >
+                {KG_OPTIONS.map((kg) => (
+                  <option key={kg} value={kg}>{kg} kg</option>
+                ))}
+              </select>
+              <span className="text-gray-400 font-bold text-sm">+</span>
+              {/* Gram dropdown */}
+              <select
+                className="input font-semibold flex-1"
+                value={parseWeightParts(form.weight || '1kg').g}
+                onChange={(e) => {
+                  const g = parseInt(e.target.value)
+                  const kg = parseWeightParts(form.weight || '1kg').kg
+                  setForm((f: any) => ({ ...f, weight: buildWeight(kg, g) }))
+                }}
+              >
+                {GRAM_OPTIONS.map((g) => (
+                  <option key={g} value={g}>{g} g</option>
+                ))}
+              </select>
+              {/* Live preview */}
+              <div className="bg-primary-50 border border-primary-200 text-primary-700 font-bold text-sm px-3 py-2 rounded-xl whitespace-nowrap flex-shrink-0">
+                = {form.weight || '1kg'}
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
