@@ -192,22 +192,23 @@ export default function AdminDashboardPage() {
         <label className="label text-gray-500 font-bold flex items-center gap-1.5 text-xs">
           <Calendar size={14} /> Filter Date Range
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
+        <div className="flex gap-2 items-center">
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">Start Date</span>
             <input
               type="date"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-semibold text-gray-800 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-2 py-2 text-xs font-semibold text-gray-800 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
               value={startDate}
               max={endDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
           </div>
-          <div className="flex flex-col gap-1">
+          <span className="text-gray-300 self-end mb-2.5">—</span>
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
             <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">End Date</span>
             <input
               type="date"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-semibold text-gray-800 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-2 py-2 text-xs font-semibold text-gray-800 outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
               value={endDate}
               min={startDate}
               max={getLocalYMD()}
