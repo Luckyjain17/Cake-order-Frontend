@@ -52,6 +52,11 @@ export default function ProductCard({ product }: Props) {
     toast.success('Added to cart! 🎂', { duration: 1500 })
   }
 
+  const formatRupee = (v: number | string | undefined) => {
+    const n = Number(v) || 0
+    return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 1 }).format(n)
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -99,9 +104,9 @@ export default function ProductCard({ product }: Props) {
           )}
           <div className="flex items-center justify-between mt-2">
             <div>
-              <span className="font-bold text-gray-900">₹{product.selling_price}</span>
+              <span className="font-bold text-gray-900">₹{formatRupee(product.selling_price)}</span>
               {product.original_price > product.selling_price && (
-                <span className="text-xs text-gray-400 line-through ml-1.5">₹{product.original_price}</span>
+                <span className="text-xs text-gray-400 line-through ml-1.5">₹{formatRupee(product.original_price)}</span>
               )}
             </div>
             <motion.button
