@@ -1,7 +1,7 @@
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, Megaphone, Phone } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api, { getImageUrl } from '@/lib/api'
 import { useQuery } from '@tanstack/react-query'
@@ -51,16 +51,11 @@ export default function PaymentPage() {
     queryFn: () => api.get('/settings/payee_name').then((r) => r.data),
   })
 
-  const { data: whatsappSetting } = useQuery({
-    queryKey: ['settings', 'whatsapp_number'],
-    queryFn: () => api.get('/settings/whatsapp_number').then((r) => r.data).catch(() => null),
-  })
-
   const customQrUrl = getImageUrl(qrSetting?.value || undefined)
   const isUpiOffline = upiIdSetting ? (upiIdSetting.value === '' && !customQrUrl) : false
   const activeUpiId = upiIdSetting?.value === null ? '8269412418@ybl' : (upiIdSetting?.value || '')
   const activePayeeName = payeeNameSetting?.value === null ? "Manu's Cake Shop" : (payeeNameSetting?.value || '')
-  const activeWhatsappNumber = whatsappSetting?.value || import.meta.env.VITE_WHATSAPP_NUMBER || '918269412418'
+  const activeWhatsappNumber = '918269412418'
   const orderAmount = order?.total_amount || 0
   const note = `Order_${orderNumber}`
 
@@ -138,9 +133,24 @@ export default function PaymentPage() {
   return (
     <div className="pb-nav">
       {!isUpiOffline && paymentStatus === 'pending' && (
-        <div className="bg-amber-500 text-white text-xs font-bold text-center py-3 px-4 shadow-sm select-none leading-normal border-b border-amber-600/20">
-          📢 IMPORTANT: After paying, you MUST click the "Payment Successful ✅" button below to confirm your order!
-        </div>
+        <motion.div 
+          animate={{ 
+            backgroundColor: ['#f59e0b', '#d97706', '#f59e0b'],
+          }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="text-white text-xs font-bold text-center py-3 px-4 shadow-md select-none leading-normal border-b border-amber-600/20 flex items-center justify-center gap-2"
+        >
+          <motion.span
+            animate={{ rotate: [-10, 10, -10] }}
+            transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+            className="flex-shrink-0"
+          >
+            <Megaphone size={14} className="fill-white/20" />
+          </motion.span>
+          <span>
+            IMPORTANT: After paying, you MUST click the "Payment Successful" button below to confirm your order!
+          </span>
+        </motion.div>
       )}
       <div className="page-container py-4 max-w-sm mx-auto">
         <h1 className="font-display text-2xl font-bold text-gray-900 text-center mb-1">Pay Now</h1>
@@ -241,24 +251,24 @@ export default function PaymentPage() {
                   whileTap={isProcessing ? undefined : { scale: 0.96 }}
                   onClick={isProcessing ? undefined : handlePaymentSuccess}
                   disabled={isProcessing}
-                  className="w-full py-4 rounded-2xl bg-green-500 text-white font-bold text-lg flex items-center justify-center gap-2 shadow-soft disabled:opacity-85 disabled:cursor-not-allowed"
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg active:scale-95 transition-all disabled:opacity-85 disabled:cursor-not-allowed"
                 >
                   {isProcessing ? (
                     <>
-                      <Loader2 size={22} className="animate-spin" /> Processing...
+                      <Loader2 size={20} className="animate-spin" /> Processing...
                     </>
                   ) : (
                     <>
-                      <CheckCircle size={22} /> Payment Successful ✅
+                      <CheckCircle size={20} /> Payment Successful
                     </>
                   )}
                 </motion.button>
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   onClick={handlePaymentFailed}
-                  className="w-full py-4 rounded-2xl bg-red-50 text-red-500 font-bold text-lg flex items-center justify-center gap-2 border-2 border-red-200"
+                  className="w-full py-4 rounded-2xl bg-white border-2 border-red-500 text-red-600 hover:bg-red-500 hover:text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg active:scale-95 transition-all"
                 >
-                  <XCircle size={22} /> Payment Not Successful ❌
+                  <XCircle size={20} /> Payment Not Successful
                 </motion.button>
               </div>
             )}
@@ -277,6 +287,49 @@ export default function PaymentPage() {
                 </button>
               </div>
             )}
+
+            {/* Help / Contact Info */}
+            <div className="mt-8 border-t border-dashed border-gray-150 pt-6">
+              <div className="card p-4 bg-gray-50 border border-gray-100/50 text-center space-y-3">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Need Help with your Payment?</p>
+                <p className="text-xs text-gray-400 leading-normal">
+                  If you face any issues or want to verify your order, feel free to contact us:
+                </p>
+                <div className="flex justify-center gap-3">
+                  <a
+                    href="tel:+918269412418"
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold text-xs flex items-center justify-center gap-2 hover:bg-gray-50 shadow-sm active:scale-95 transition-all"
+                  >
+                    <Phone size={14} className="text-primary-500" />
+                    Call Us
+                  </a>
+                  <a
+                    href="https://www.instagram.com/homemade_mapas_cakes?igsh=b28xZTN2NTVucjF0"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold text-xs flex items-center justify-center gap-2 hover:bg-gray-50 shadow-sm active:scale-95 transition-all"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-pink-500"
+                    >
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                    </svg>
+                    Instagram
+                  </a>
+                </div>
+              </div>
+            </div>
           </>
         )}
       </div>

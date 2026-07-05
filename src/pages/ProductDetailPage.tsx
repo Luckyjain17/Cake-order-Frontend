@@ -117,6 +117,10 @@ export default function ProductDetailPage() {
     ? JSON.parse(product.weight_options)
     : WEIGHTS
 
+  const flavors = product.flavor
+    ? product.flavor.split(',').map((f: string) => f.trim()).filter(Boolean)
+    : []
+
   const displayWeights = (product.is_customizable && !weights.includes('Custom Weight'))
     ? [...weights, 'Custom Weight']
     : weights
@@ -228,7 +232,26 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Customizations Section */}
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Flavors Display */}
+            {flavors.length > 0 && (
+              <div className="bg-gradient-to-br from-pink-50/50 to-purple-50/10 border border-pink-100/40 rounded-2xl p-4 space-y-2">
+                <label className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider block">
+                  Available Flavors
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {flavors.map((f) => (
+                    <span
+                      key={f}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white border border-pink-100 text-xs font-bold text-primary-500 shadow-sm"
+                    >
+                      🍰 {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Weight Picker */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Weight</label>

@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import api from '@/lib/api'
@@ -7,94 +8,144 @@ import type { PaginatedProducts, Category } from '@/types'
 import ProductCarousel from '@/components/ProductCarousel'
 import WhatsAppFab from '@/components/WhatsAppFab'
 
+import {
+  Cake,
+  Heart,
+  Sparkles,
+  Smile,
+  Cookie,
+  Palette,
+  PartyPopper,
+  Camera,
+  Gift,
+  Phone,
+} from 'lucide-react'
+
+const CATEGORY_ICON_MAP: Record<string, React.ComponentType<any>> = {
+  'birthday-cake': Cake,
+  'anniversary-cake': Heart,
+  'wedding-cake': Sparkles,
+  'kids-cake': Smile,
+  'cup-cake': Cookie,
+  'pastry': Gift,
+  'theme-cake': Palette,
+  'festival-cake': PartyPopper,
+  'photo-cake': Camera,
+}
+
+function getCategoryIcon(name: string) {
+  const slug = name.toLowerCase().trim().replace(/[\s_-]+/g, '-')
+  return CATEGORY_ICON_MAP[slug] || Cake
+}
+
 export default function HomePage() {
   const { data: featured, isLoading: loadFeatured } = useQuery<PaginatedProducts>({
     queryKey: ['featured'],
     queryFn: () => api.get('/products/featured').then((r) => r.data),
-  })
-  const { data: trending, isLoading: loadTrending } = useQuery<PaginatedProducts>({
-    queryKey: ['trending'],
-    queryFn: () => api.get('/products/trending').then((r) => r.data),
-  })
-  const { data: newArrivals, isLoading: loadNew } = useQuery<PaginatedProducts>({
-    queryKey: ['newArrivals'],
-    queryFn: () => api.get('/products/new-arrivals').then((r) => r.data),
   })
   const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: () => api.get('/categories/').then((r) => r.data),
   })
 
+  const [helpHighlighted, setHelpHighlighted] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.hash === '#contact-support') {
+      const helpSection = document.getElementById('contact-support')
+      if (!helpSection) return
+
+      const scrollToHelp = () => {
+        helpSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        setHelpHighlighted(true)
+        window.setTimeout(() => setHelpHighlighted(false), 1600)
+      }
+
+      window.setTimeout(scrollToHelp, 120)
+    }
+  }, [location.hash])
+
   return (
     <div className="pb-nav">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-pink-50 via-rose-50 to-white">
-        <div className="page-container py-10 md:py-16">
+      <section className="relative overflow-hidden bg-gradient-to-br from-pink-50 via-rose-50 to-white border-b border-pink-50/50">
+        <div className="page-container py-10 md:py-16 flex flex-col md:flex-row items-center justify-between gap-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="max-w-lg"
+            className="max-w-lg text-center md:text-left flex flex-col items-center md:items-start"
           >
-            <p className="text-primary-500 font-semibold text-sm tracking-wide mb-2">🎂 100% Eggless</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-extrabold uppercase tracking-wide mb-4 shadow-sm select-none">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+              </span>
+              100% Eggless
+            </div>
             <h1 className="font-display text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
               Cakes that make <span className="text-gradient">moments</span> unforgettable
             </h1>
             <p className="mt-4 text-gray-500 text-base leading-relaxed">
-              Handmade with love. Perfect for every celebration — birthdays, weddings, anniversaries and more.
+              Homemade with love. Perfect for every celebration — birthdays, weddings, anniversaries and more.
             </p>
-            <div className="mt-6 flex gap-3">
-              <Link to="/shop" className="btn-primary">
+            <div className="mt-6">
+              <Link to="/shop" className="btn-primary px-8 py-3.5 text-base font-bold shadow-md shadow-primary-200/50 hover:-translate-y-0.5 transition-all">
                 Order Now
               </Link>
-              {/* <Link to="/shop?filter=best_seller" className="btn-secondary">
-                Best Sellers
-              </Link> */}
             </div>
           </motion.div>
-          {/* Decorative floating cakes */}
-          <div className="absolute right-0 top-0 w-1/2 h-full hidden md:flex items-center justify-center pointer-events-none select-none">
-            <motion.div
-              animate={{ y: [0, -12, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              className="text-[10rem] opacity-20"
-            >
-              🎂
-            </motion.div>
-          </div>
+
+          {/* Large floating Logo */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              y: [0, -10, 0]
+            }}
+            transition={{
+              opacity: { duration: 0.6, delay: 0.2 },
+              scale: { duration: 0.6, delay: 0.2 },
+              y: { duration: 4, repeat: Infinity, ease: 'easeInOut' }
+            }}
+            className="flex-shrink-0 w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 rounded-full overflow-hidden border-4 border-white shadow-xl shadow-pink-100/50 relative bg-white select-none"
+          >
+            <img
+              src="/logo.jpg"
+              alt="Homemade Mapas Cake"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 rounded-full border border-pink-100/30 pointer-events-none" />
+          </motion.div>
         </div>
       </section>
 
-      {/* Search bar */}
-      <div className="page-container -mt-5 relative z-10">
-        <Link
-          to="/search"
-          className="flex items-center gap-3 bg-white rounded-2xl shadow-card px-4 py-3.5 border border-gray-100"
-        >
-          <Search size={18} className="text-gray-400" />
-          <span className="text-gray-400 text-sm">Search cakes, flavors, occasions…</span>
-        </Link>
-      </div>
+
 
       {/* Categories */}
       {categories && categories.length > 0 && (
-        <section className="page-container mt-8 space-y-3">
-          <h2 className="section-title">Categories</h2>
-          <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-1">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                to={`/shop?category=${cat.id}`}
-                className="flex-shrink-0 flex flex-col items-center gap-1.5"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-50 to-rose-100 flex items-center justify-center text-3xl shadow-soft border border-pink-100 hover:scale-105 transition-transform">
-                  {cat.icon || '🎂'}
-                </div>
-                <span className="text-[11px] font-medium text-gray-600 text-center max-w-[64px] leading-tight">
-                  {cat.name}
-                </span>
-              </Link>
-            ))}
+        <section className="page-container mt-8 space-y-4">
+          <h2 className="section-title text-gray-950 font-display text-lg font-bold">Categories</h2>
+          <div className="flex gap-4 overflow-x-auto hide-scrollbar py-2">
+            {categories.map((cat) => {
+              const IconComponent = getCategoryIcon(cat.name)
+              return (
+                <Link
+                  key={cat.id}
+                  to={`/shop?category=${cat.id}`}
+                  className="flex-shrink-0 flex flex-col items-center gap-2 group"
+                >
+                  <div className="w-16 h-16 rounded-full bg-white border border-pink-100/60 flex items-center justify-center text-primary-500 shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md group-hover:border-primary-300 group-hover:bg-pink-50/20">
+                    <IconComponent size={24} className="transition-transform group-hover:scale-110" />
+                  </div>
+                  <span className="text-xs font-bold text-gray-700 text-center max-w-[72px] leading-tight group-hover:text-primary-500 transition-colors">
+                    {cat.name}
+                  </span>
+                </Link>
+              )
+            })}
           </div>
         </section>
       )}
@@ -117,26 +168,64 @@ export default function HomePage() {
         </motion.div>
       </div>
 
+      {/* Help / Contact */}
+      <section id="contact-support" className="page-container mt-10 mb-4 scroll-mt-24">
+        <motion.div
+          animate={helpHighlighted ? {
+            boxShadow: ['0 0 0 0px rgba(236,72,153,0)', '0 0 0 6px rgba(236,72,153,0.35)', '0 0 0 12px rgba(236,72,153,0.15)', '0 0 0 0px rgba(236,72,153,0)'],
+            scale: [1, 1.015, 1.005, 1],
+          } : { boxShadow: '0 0 0 0px rgba(236,72,153,0)', scale: 1 }}
+          transition={{ duration: 1.2, times: [0, 0.3, 0.7, 1] }}
+          className="card p-5 sm:p-6 bg-gradient-to-br from-pink-50/60 via-white to-rose-50/20 border border-pink-100/50 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between rounded-2xl"
+        >
+          <div className="text-center sm:text-left">
+            <h3 className="text-sm font-bold text-gray-900">Need Help or Custom Orders?</h3>
+            <p className="text-xs text-gray-400 mt-1">Reach out to us directly via Call or Instagram</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
+            <a
+              href="tel:+918269412418"
+              className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold text-xs flex items-center justify-center gap-2 hover:bg-gray-50 shadow-sm active:scale-95 transition-all"
+            >
+              <Phone size={14} className="text-primary-500" />
+              Call Support
+            </a>
+            <a
+              href="https://www.instagram.com/homemade_mapas_cakes?igsh=b28xZTN2NTVucjF0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none py-2.5 px-4 rounded-xl bg-white border border-gray-200 text-gray-700 font-bold text-xs flex items-center justify-center gap-2 hover:bg-gray-50 shadow-sm active:scale-95 transition-all"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-pink-500"
+              >
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+              Instagram
+            </a>
+          </div>
+        </motion.div>
+      </section>
+
       {/* Carousels */}
       <div className="mt-10 space-y-10">
         {/* <ProductCarousel
-          title="⭐ Best Sellers"
+          title="Best Sellers"
           viewAllLink="/shop?filter=best_seller"
           products={featured?.items || []}
           loading={loadFeatured}
         /> */}
-        <ProductCarousel
-          title="🔥 Trending Now"
-          viewAllLink="/shop?filter=trending"
-          products={trending?.items || []}
-          loading={loadTrending}
-        />
-        <ProductCarousel
-          title="✨ New Arrivals"
-          viewAllLink="/shop?filter=new_arrival"
-          products={newArrivals?.items || []}
-          loading={loadNew}
-        />
       </div>
 
       {/* Footer spacer */}

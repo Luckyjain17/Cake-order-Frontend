@@ -103,7 +103,7 @@ export default function CartPage() {
             <span>₹{totalAmount.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-sm text-gray-600">
-            <span>Delivery</span>
+            <span>Packing Charges</span>
             <span className="text-green-600 font-medium">Free</span>
           </div>
           <div className="divider" />

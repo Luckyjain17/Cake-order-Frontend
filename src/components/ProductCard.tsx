@@ -91,7 +91,7 @@ export default function ProductCard({ product }: Props) {
             {product.name}
           </p>
           {(product.flavor || product.price_base_weight) && (
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-gray-400 mt-0.5 truncate">
               {product.flavor}
               {product.flavor && product.price_base_weight && <span className="mx-1">•</span>}
               {product.price_base_weight}

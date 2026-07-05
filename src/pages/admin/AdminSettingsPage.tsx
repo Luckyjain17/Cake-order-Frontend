@@ -295,7 +295,7 @@ export default function AdminSettingsPage() {
                     {reopenTime ? new Date(reopenTime).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'Indefinitely'}
                   </strong>
                 </p>
-                
+
                 <button
                   type="button"
                   onClick={handleOpenStore}
@@ -324,7 +324,7 @@ export default function AdminSettingsPage() {
             </p>
 
             {/* WhatsApp Number Form */}
-            <form onSubmit={handleSaveWhatsapp} className="space-y-2">
+            {/* <form onSubmit={handleSaveWhatsapp} className="space-y-2">
               <label className="label">WhatsApp Contact Number (with country code)</label>
               <div className="flex gap-2">
                 <input
@@ -347,7 +347,7 @@ export default function AdminSettingsPage() {
                   Save
                 </button>
               </div>
-            </form>
+            </form> */}
 
             {/* UPI ID Form */}
             <form onSubmit={handleSaveUpi} className="space-y-2">

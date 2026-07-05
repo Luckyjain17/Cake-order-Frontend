@@ -12,12 +12,30 @@ const CATEGORIES_QUERY = () => api.get('/categories/all').then((r) => r.data)
 
 const FLAVORS = ['Chocolate', 'Black Forest', 'Butterscotch', 'Vanilla', 'Pineapple', 'Strawberry', 'Red Velvet', 'Blueberry', 'Mango', 'Coffee', 'Mixed Fruit']
 const SHAPES = ['Round', 'Square', 'Heart', 'Rectangle', 'Custom']
-const WEIGHTS = ['500g', '1kg', '1.5kg', '2kg', '3kg', 'Custom Weight']
-const CUSTOM_WEIGHT_OPTIONS = [
-  '1kg', '1.5kg', '2kg', '2.5kg', '3kg', '3.5kg', '4kg', '4.5kg',
-  '5kg', '5.5kg', '6kg', '6.5kg', '7kg', '7.5kg', '8kg', '8.5kg',
-  '9kg', '9.5kg', '10kg'
-]
+const KG_OPTIONS = Array.from({ length: 11 }, (_, i) => i) // 0 to 10
+const GRAM_OPTIONS = Array.from({ length: 20 }, (_, i) => i * 50) // 0, 50, 100 ... 950
+
+function parseWeightParts(weight: string): { kg: number; g: number } {
+  const clean = (weight || '').toLowerCase().trim()
+  const kgMatch = clean.match(/(\d+\.?\d*)\s*kg/)
+  const gMatch = clean.match(/(\d+)\s*g(?!kg)/)
+  const kg = kgMatch ? parseFloat(kgMatch[1]) : 0
+  const totalG = gMatch ? parseInt(gMatch[1]) : 0
+  if (!kgMatch && totalG > 0) {
+    return { kg: Math.floor(totalG / 1000), g: totalG % 1000 }
+  }
+  const wholePart = Math.floor(kg)
+  const fracG = Math.round((kg - wholePart) * 1000)
+  return { kg: wholePart, g: fracG }
+}
+
+function buildWeight(kg: number, g: number): string {
+  const totalG = kg * 1000 + g
+  if (totalG === 0) return '500g'
+  if (kg === 0) return `${g}g`
+  if (g === 0) return `${kg}kg`
+  return `${kg + g / 1000}kg`
+}
 
 const blank = {
   name: '', short_description: '', full_description: '',
@@ -26,7 +44,7 @@ const blank = {
   price_base_weight: '500g',
   original_price: '', selling_price: '', discount_percent: '0',
   preparation_time: '3 hours',
-  storage_instructions: 'Store in refrigerator. Best consumed within 2 days.',
+  storage_instructions: 'Store in refrigerator.',
   is_customizable: false, is_available: true, is_best_seller: false, is_trending: false, is_new_arrival: true,
 }
 
@@ -134,6 +152,8 @@ export default function AdminProductFormPage() {
   const [savedProductId, setSavedProductId] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedWeights, setSelectedWeights] = useState<string[]>(['500g', '1kg', '1.5kg', '2kg'])
+  const [addWeightKg, setAddWeightKg] = useState(0)
+  const [addWeightG, setAddWeightG] = useState(500)
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [creatingCategory, setCreatingCategory] = useState(false)
@@ -149,6 +169,24 @@ export default function AdminProductFormPage() {
     }
   })
 
+  const [showShapeManager, setShowShapeManager] = useState(false)
+  const [newShape, setNewShape] = useState('')
+  const [creatingShape, setCreatingShape] = useState(false)
+  const [addedShapes, setAddedShapes] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('added_shapes') || '[]')
+    } catch {
+      return []
+    }
+  })
+  const [deletedShapes, setDeletedShapes] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('deleted_shapes') || '[]')
+    } catch {
+      return []
+    }
+  })
+
   const { data: categories } = useQuery({ queryKey: ['allCategories'], queryFn: CATEGORIES_QUERY })
   const { data: filtersData } = useQuery<{ flavors: string[], cake_types: string[] }>({
     queryKey: ['filtersList'],
@@ -158,6 +196,8 @@ export default function AdminProductFormPage() {
   const dynamicFlavors = (filtersData?.flavors?.length
     ? Array.from(new Set([...FLAVORS, ...filtersData.flavors]))
     : FLAVORS).filter(f => !deletedFlavors.includes(f))
+
+  const dynamicShapes = Array.from(new Set([...SHAPES, ...addedShapes])).filter(s => !deletedShapes.includes(s))
 
   const { data: product } = useQuery<Product>({
     queryKey: ['product-admin', id],
@@ -201,34 +241,39 @@ export default function AdminProductFormPage() {
 
   const toggle = (k: string) => setForm((f: any) => ({ ...f, [k]: !f[k] }))
 
-  const toggleWeight = (w: string) => {
-    const isSelecting = !selectedWeights.includes(w)
-    const next = isSelecting
-      ? [...selectedWeights, w]
-      : selectedWeights.filter((x) => x !== w)
+  const selectedFlavors = form.flavor
+    ? form.flavor.split(',').map((f: string) => f.trim()).filter(Boolean)
+    : []
+
+  const toggleFlavor = (f: string) => {
+    let nextFlavors;
+    if (selectedFlavors.includes(f)) {
+      nextFlavors = selectedFlavors.filter((x: string) => x !== f)
+    } else {
+      nextFlavors = [...selectedFlavors, f]
+    }
+    setForm((oldForm: any) => ({ ...oldForm, flavor: nextFlavors.join(', ') }))
+  }
+
+  const addWeight = () => {
+    const w = buildWeight(addWeightKg, addWeightG)
+    if (selectedWeights.includes(w)) return
+    const next = [...selectedWeights, w].sort((a, b) => parseKg(a) - parseKg(b))
+    setSelectedWeights(next)
+    setForm((f: any) => ({
+      ...f,
+      weight_options: JSON.stringify(next),
+      price_base_weight: f.price_base_weight || w,
+    }))
+  }
+
+  const removeWeight = (w: string) => {
+    const next = selectedWeights.filter((x) => x !== w)
     setSelectedWeights(next)
     setForm((f: any) => {
-      const nextBaseWeightOptions = (() => {
-        const checkedStandard = next.filter((x) => x !== 'Custom Weight')
-        const opts = next.includes('Custom Weight')
-          ? Array.from(new Set([...checkedStandard, ...CUSTOM_WEIGHT_OPTIONS]))
-          : checkedStandard
-        
-        // Filter out weights lower than the minimum checked standard weight
-        const minWeightKg = checkedStandard.length > 0
-          ? checkedStandard.reduce((min, currentStr) => {
-              const kg = parseKg(currentStr)
-              return kg < min ? kg : min
-            }, 999)
-          : 0
-        const filtered = opts.filter((opt) => parseKg(opt) >= minWeightKg)
-        return [...filtered].sort((a, b) => parseKg(a) - parseKg(b))
-      })()
-      let nextBaseWeight = f.price_base_weight
-      if (nextBaseWeightOptions.length > 0 && !nextBaseWeightOptions.includes(f.price_base_weight)) {
-        nextBaseWeight = nextBaseWeightOptions[0]
-      }
-      return { ...f, weight_options: JSON.stringify(next), price_base_weight: nextBaseWeight }
+      let nextBase = f.price_base_weight
+      if (!next.includes(nextBase)) nextBase = next[0] || ''
+      return { ...f, weight_options: JSON.stringify(next), price_base_weight: nextBase }
     })
   }
 
@@ -312,6 +357,43 @@ export default function AdminProductFormPage() {
     }
   }
 
+  const handleCreateShape = (e: React.FormEvent) => {
+    e.preventDefault()
+    const val = newShape.trim()
+    if (!val) return
+    setCreatingShape(true)
+    try {
+      const nextAdded = Array.from(new Set([...addedShapes, val]))
+      const nextDeleted = deletedShapes.filter(s => s.toLowerCase() !== val.toLowerCase())
+      setAddedShapes(nextAdded)
+      setDeletedShapes(nextDeleted)
+      localStorage.setItem('added_shapes', JSON.stringify(nextAdded))
+      localStorage.setItem('deleted_shapes', JSON.stringify(nextDeleted))
+      setForm((f: any) => ({ ...f, shape: val }))
+      toast.success('Shape added!')
+      setNewShape('')
+      setShowShapeManager(false)
+    } catch {
+      toast.error('Failed to add Shape')
+    } finally {
+      setCreatingShape(false)
+    }
+  }
+
+  const handleDeleteShape = (shapeName: string) => {
+    if (!window.confirm(`Are you sure you want to delete shape "${shapeName}"?`)) return
+    const nextDeleted = Array.from(new Set([...deletedShapes, shapeName]))
+    const nextAdded = addedShapes.filter(s => s !== shapeName)
+    setAddedShapes(nextAdded)
+    setDeletedShapes(nextDeleted)
+    localStorage.setItem('added_shapes', JSON.stringify(nextAdded))
+    localStorage.setItem('deleted_shapes', JSON.stringify(nextDeleted))
+    if (form.shape === shapeName) {
+      setForm((f: any) => ({ ...f, shape: '' }))
+    }
+    toast.success('Shape deleted')
+  }
+
 
   const clearLocalFiles = () => {
     images.forEach((img) => {
@@ -368,7 +450,7 @@ export default function AdminProductFormPage() {
         handleDone()
       } else {
         const { data: newProduct } = await api.post('/products/', payload)
-        
+
         if (localFiles.length > 0 && newProduct?.id) {
           const formData = new FormData()
           const sortedLocalFiles = images
@@ -378,23 +460,23 @@ export default function AdminProductFormPage() {
             })
             .map((img) => localFiles.find((lf) => lf.id === (img.id as any))?.file)
             .filter((file): file is File => !!file)
-            
+
           sortedLocalFiles.forEach((file) => {
             formData.append('files', file)
           })
           formData.append('image_type', 'other')
-          
+
           const { data: uploadedImages } = await api.post(`/images/upload/${newProduct.id}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
           })
-          
+
           const firstImage = images[0]
           if (firstImage) {
             const firstImgId = firstImage.id as any
             if (typeof firstImgId === 'string' && firstImgId.startsWith('local-')) {
               const firstUploaded = uploadedImages[0]
               if (firstUploaded) {
-                await api.patch(`/images/${firstUploaded.id}/set-cover`).catch(() => {})
+                await api.patch(`/images/${firstUploaded.id}/set-cover`).catch(() => { })
               }
             }
           }
@@ -463,7 +545,7 @@ export default function AdminProductFormPage() {
                 onChange={set('category_id')}
               >
                 <option value="">Select category</option>
-                {categories?.map((c: any) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+                {categories?.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
               <button
                 type="button"
@@ -475,52 +557,118 @@ export default function AdminProductFormPage() {
             </div>
           </Field>
 
-          <Field label="Flavor">
-            <div className="flex gap-2">
-              <select
-                className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-white"
-                value={form.flavor}
-                onChange={set('flavor')}
-              >
-                <option value="">Select flavor</option>
-                {dynamicFlavors.map((f) => <option key={f} value={f}>{f}</option>)}
-              </select>
-              <button
-                type="button"
-                onClick={() => setShowFlavorManager(true)}
-                className="btn-secondary px-3 py-1.5 text-xs flex-shrink-0"
-              >
-                + Add / Manage
-              </button>
+          <Field label="Flavors (Select multiple)">
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 bg-gray-50/50 rounded-2xl border border-gray-150/70">
+                {dynamicFlavors.map((f) => {
+                  const active = selectedFlavors.includes(f)
+                  return (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => toggleFlavor(f)}
+                      className={`px-3 py-1.5 rounded-xl border-2 text-sm font-semibold transition-all ${active
+                          ? 'border-primary-500 bg-primary-50 text-primary-500 shadow-sm'
+                          : 'border-gray-200 text-gray-600 bg-white hover:bg-gray-50'
+                        }`}
+                    >
+                      {f}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="flex justify-between items-center">
+                <p className="text-xs text-gray-400 font-semibold truncate max-w-[70%]">
+                  Selected: {selectedFlavors.length > 0 ? selectedFlavors.join(', ') : 'None'}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowFlavorManager(true)}
+                  className="btn-secondary px-3 py-1.5 text-xs flex-shrink-0"
+                >
+                  + Add / Manage
+                </button>
+              </div>
             </div>
           </Field>
           <Field label="Shape">
-            <div className="flex flex-wrap gap-2">
-              {SHAPES.map((s) => (
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {dynamicShapes.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setForm((f: any) => ({ ...f, shape: f.shape === s ? '' : s }))}
+                    className={`px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all ${form.shape === s ? 'border-primary-500 bg-primary-50 text-primary-500' : 'border-gray-200 text-gray-600'
+                      }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between items-center">
+                <p className="text-xs text-gray-400 font-semibold truncate max-w-[70%]">
+                  Selected Shape: {form.shape || 'None'}
+                </p>
                 <button
-                  key={s}
                   type="button"
-                  onClick={() => setForm((f: any) => ({ ...f, shape: f.shape === s ? '' : s }))}
-                  className={`px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all ${form.shape === s ? 'border-primary-500 bg-primary-50 text-primary-500' : 'border-gray-200 text-gray-600'
-                    }`}
+                  onClick={() => setShowShapeManager(true)}
+                  className="btn-secondary px-3 py-1.5 text-xs flex-shrink-0"
                 >
-                  {s}
+                  + Add / Manage
                 </button>
-              ))}
+              </div>
             </div>
           </Field>
           <Field label="Weight Options">
+            {/* Add weight row */}
+            <div className="flex gap-2 items-center mb-3">
+              <select
+                className="input font-semibold flex-1 text-sm"
+                value={addWeightKg}
+                onChange={(e) => setAddWeightKg(parseInt(e.target.value))}
+              >
+                {KG_OPTIONS.map((kg) => (
+                  <option key={kg} value={kg}>{kg} kg</option>
+                ))}
+              </select>
+              <span className="text-gray-400 font-bold text-sm">+</span>
+              <select
+                className="input font-semibold flex-1 text-sm"
+                value={addWeightG}
+                onChange={(e) => setAddWeightG(parseInt(e.target.value))}
+              >
+                {GRAM_OPTIONS.map((g) => (
+                  <option key={g} value={g}>{g} g</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={addWeight}
+                className="btn-primary px-3 py-2 text-sm flex-shrink-0"
+              >
+                + Add
+              </button>
+            </div>
+            {/* Selected weight tags */}
             <div className="flex flex-wrap gap-2">
-              {WEIGHTS.map((w) => (
-                <button
+              {selectedWeights.length === 0 && (
+                <span className="text-sm text-gray-400">No weights added yet</span>
+              )}
+              {selectedWeights.map((w) => (
+                <div
                   key={w}
-                  type="button"
-                  onClick={() => toggleWeight(w)}
-                  className={`px-3 py-1.5 rounded-xl border-2 text-sm font-medium transition-all ${selectedWeights.includes(w) ? 'border-primary-500 bg-primary-50 text-primary-500' : 'border-gray-200 text-gray-600'
-                    }`}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl border-2 border-primary-500 bg-primary-50 text-primary-600 text-sm font-semibold"
                 >
                   {w}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => removeWeight(w)}
+                    className="ml-1 text-primary-400 hover:text-red-500 font-bold leading-none"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           </Field>
@@ -544,28 +692,12 @@ export default function AdminProductFormPage() {
                 value={form.price_base_weight}
                 onChange={set('price_base_weight')}
               >
-                {(() => {
-                  const checkedStandard = selectedWeights.filter((w) => w !== 'Custom Weight')
-                  const options = selectedWeights.includes('Custom Weight')
-                    ? Array.from(new Set([...checkedStandard, ...CUSTOM_WEIGHT_OPTIONS]))
-                    : (checkedStandard.length > 0 ? checkedStandard : ['500g', '1kg', '1.5kg', '2kg', '3kg'])
-                  
-                  // Filter out weights lower than the minimum checked standard weight
-                  const minWeightKg = checkedStandard.length > 0
-                    ? checkedStandard.reduce((min, currentStr) => {
-                        const kg = parseKg(currentStr)
-                        return kg < min ? kg : min
-                      }, 999)
-                    : 0
-                  
-                  const filteredOptions = options.filter((opt) => parseKg(opt) >= minWeightKg)
-                  const sortedOptions = [...filteredOptions].sort((a, b) => parseKg(a) - parseKg(b))
-                  return sortedOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))
-                })()}
+                {selectedWeights.length === 0 && (
+                  <option value="">— select weight options first —</option>
+                )}
+                {selectedWeights.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
               </select>
             </Field>
           </div>
@@ -689,7 +821,6 @@ export default function AdminProductFormPage() {
                 categories.map((cat: any) => (
                   <div key={cat.id} className="flex items-center justify-between bg-white border border-gray-100 p-2.5 rounded-xl shadow-sm">
                     <div className="flex items-center gap-2">
-                      {cat.icon && <span className="text-lg">{cat.icon}</span>}
                       <span className="text-sm font-semibold text-gray-700">{cat.name}</span>
                     </div>
                     <button
@@ -760,6 +891,66 @@ export default function AdminProductFormPage() {
                   <button
                     type="button"
                     onClick={() => handleDeleteFlavor(flv)}
+                    className="text-red-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shape Manager Modal */}
+      {showShapeManager && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-lifted animate-scale-in flex flex-col max-h-[85vh]">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-900 text-base">Manage Shapes</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowShapeManager(false)
+                  setNewShape('')
+                }}
+                className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Creation Form */}
+            <form onSubmit={handleCreateShape} className="space-y-3 bg-gray-50 p-3 rounded-2xl">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Add New Shape</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  required
+                  value={newShape}
+                  onChange={(e) => setNewShape(e.target.value)}
+                  placeholder="e.g. Hexagon"
+                  className="input bg-white py-2"
+                />
+                <button
+                  type="submit"
+                  disabled={creatingShape}
+                  className="btn-primary py-2 px-4 text-xs"
+                >
+                  Add
+                </button>
+              </div>
+            </form>
+
+            {/* List and Delete Options */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[40vh]">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Selectable Shapes</p>
+              {dynamicShapes.map((shp) => (
+                <div key={shp} className="flex items-center justify-between bg-white border border-gray-100 p-2.5 rounded-xl shadow-sm">
+                  <span className="text-sm font-semibold text-gray-700">{shp}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteShape(shp)}
                     className="text-red-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 size={15} />

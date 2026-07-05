@@ -83,11 +83,11 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="p-4 pb-8 space-y-4 max-w-md mx-auto">
+    <div className="p-4 pb-8 space-y-4 max-w-xl mx-auto">
       {/* Title */}
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold text-gray-900">Orders</h1>
-        <Link to="/admin/orders/new" className="btn-primary flex items-center gap-1">
+        <Link to="/admin/orders/new" className="btn-primary flex items-center gap-1.5">
           <Plus size={16} /> New Order
         </Link>
       </div>
@@ -120,7 +120,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Orders List */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {isLoading ? (
           // Skeleton while loading
           <div className="space-y-3">
@@ -129,7 +129,7 @@ export default function AdminOrdersPage() {
             ))}
           </div>
         ) : orders.length === 0 ? (
-          <div className="text-center py-16">
+          <div className="text-center py-16 bg-white rounded-3xl border border-gray-100 shadow-sm">
             <span className="text-5xl">📋</span>
             <p className="text-gray-400 mt-3">
               {search ? 'No orders match your search' : 'No orders yet. Tap + New Order to add one.'}
@@ -145,19 +145,19 @@ export default function AdminOrdersPage() {
             return (
               <div
                 key={order.id}
-                className="card p-4 space-y-4 border border-gray-100 shadow-sm hover:shadow-soft transition-all duration-300 relative overflow-hidden bg-white"
+                className="card p-5 space-y-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden bg-white rounded-3xl"
               >
                 {/* Header: Order Number & Source */}
-                <div className="flex items-center justify-between">
-                  <span className="bg-pink-50 text-primary-600 px-2.5 py-1 rounded-xl text-xs font-extrabold tracking-wide border border-pink-100/50">
+                <div className="flex items-center justify-between border-b border-gray-50 pb-3">
+                  <span className="bg-pink-50 text-primary-600 px-3 py-1 rounded-xl text-xs font-extrabold tracking-wide border border-pink-100/50">
                     #{order.order_number}
                   </span>
                   
                   <div className="flex items-center gap-1.5">
-                    <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider capitalize">
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider capitalize">
                       {order.order_source === 'whatsapp' ? '💬' : order.order_source === 'phone' ? '📞' : order.order_source === 'walkin' ? '🚶' : order.order_source === 'instagram' ? '📸' : order.order_source === 'facebook' ? '📘' : '📌'} {order.order_source}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-lg font-bold text-[9px] uppercase tracking-wider border ${
+                    <span className={`px-2.5 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider border ${
                       order.payment_status === 'paid'
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
                         : order.payment_status === 'half'
@@ -170,42 +170,45 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {/* Customer Info */}
-                <div className="space-y-1.5 text-xs text-gray-600">
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-gray-800 text-sm">{order.customer_name}</p>
+                <div className="space-y-2 text-xs text-gray-600">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-extrabold text-gray-900 text-lg tracking-tight leading-tight">{order.customer_name}</p>
+                      <p className="text-xs text-gray-400 font-bold mt-1 tracking-wider">{order.mobile_number}</p>
+                    </div>
                     <a
                       href={`tel:${order.mobile_number}`}
-                      className="flex items-center gap-1 text-[11px] text-primary-500 font-extrabold bg-primary-50 px-2.5 py-1 rounded-xl hover:bg-primary-100 transition-colors"
+                      className="flex items-center gap-1.5 text-xs text-white font-bold bg-primary-500 px-3.5 py-2 rounded-xl hover:bg-primary-600 active:scale-95 transition-all shadow-sm"
                     >
-                      <Phone size={11} /> Call Now
+                      <Phone size={12} /> Call
                     </a>
                   </div>
-                  <p className="text-gray-400 font-medium">{order.mobile_number}</p>
                   {order.address && (
-                    <div className="flex gap-1.5 items-start bg-gray-50/50 border border-gray-100 p-2 rounded-xl mt-1 text-gray-500">
-                      <span className="mt-0.5 text-xs">📍</span>
-                      <p className="leading-relaxed truncate">{order.address}</p>
+                    <div className="flex gap-2 items-start bg-gray-50/50 border border-gray-100 p-2.5 rounded-xl text-gray-500 mt-1">
+                      <span className="text-xs mt-0.5">📍</span>
+                      <p className="leading-relaxed font-medium">{order.address}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Product Box */}
-                <div className="flex justify-between items-center bg-gradient-to-r from-pink-50/30 to-purple-50/10 p-3 rounded-2xl border border-pink-100/30">
-                  <div className="min-w-0 pr-2">
-                    <p className="text-sm font-bold text-gray-800 truncate">{order.cake_name}</p>
-                    <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
-                      ⚖️ {order.weight || '1kg'} • {order.quantity} qty
-                    </p>
+                <div className="flex justify-between items-center bg-gray-50/70 p-3.5 rounded-2xl border border-gray-100/50">
+                  <div className="min-w-0 pr-3">
+                    <p className="text-base font-extrabold text-gray-900 leading-snug">{order.cake_name}</p>
+                    <div className="flex items-center gap-2 mt-1.5 text-xs font-semibold text-gray-500">
+                      <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-lg">⚖️ {order.weight || '1kg'}</span>
+                      <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-lg">📦 {order.quantity} Qty</span>
+                    </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-extrabold text-primary-600">₹{totalAmt.toLocaleString()}</p>
-                    <p className="text-[9px] text-gray-400 font-semibold mt-0.5">₹{Math.round(totalAmt / (order.quantity || 1)).toLocaleString()}/unit</p>
+                    <p className="text-base font-black text-primary-600 tracking-tight font-sans">₹{totalAmt.toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-400 font-bold mt-0.5">₹{Math.round(totalAmt / (order.quantity || 1)).toLocaleString()}/unit</p>
                   </div>
                 </div>
 
                 {/* Half Paid Breakdown box */}
                 {order.payment_status === 'half' && (
-                  <div className="space-y-1.5 p-3 bg-blue-50/30 border border-blue-50 rounded-2xl text-[10px]">
+                  <div className="space-y-1.5 p-3.5 bg-blue-50/20 border border-blue-100/50 rounded-2xl text-[10px]">
                     <div className="flex justify-between font-bold text-blue-600">
                       <span>Paid: ₹{paidAmt.toLocaleString()}</span>
                       <span>Balance: ₹{balanceAmt.toLocaleString()}</span>
@@ -222,33 +225,33 @@ export default function AdminOrdersPage() {
 
                 {/* Notes box */}
                 {order.notes && (
-                  <div className="flex items-start gap-1.5 text-[11px] text-amber-700 bg-amber-50/40 border border-amber-100 rounded-xl p-2.5 leading-relaxed">
-                    <span className="text-xs">📝</span>
-                    <p>{order.notes}</p>
+                  <div className="flex items-start gap-2 text-[11px] text-amber-800 bg-amber-50/30 border border-amber-100/50 rounded-xl p-3 leading-relaxed">
+                    <span className="text-xs flex-shrink-0">📝</span>
+                    <p className="font-medium">{order.notes}</p>
                   </div>
                 )}
 
                 {/* Delivery Date */}
                 {order.delivery_date && (
-                  <div className="flex items-center gap-1 text-[10px] text-gray-400 font-semibold border-t border-gray-50 pt-2">
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-bold border-t border-gray-100 pt-3">
                     <span>📅 Delivery Date:</span>
-                    <span className="text-gray-700 font-bold">{order.delivery_date}</span>
+                    <span className="text-gray-800 font-extrabold">{order.delivery_date}</span>
                   </div>
                 )}
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-50">
                   <Link
                     to={`/admin/orders/edit/${order.id}`}
-                    className="py-2 rounded-xl bg-gray-50 text-gray-700 hover:bg-gray-100 flex items-center justify-center gap-1.5 transition-colors text-[11px] font-bold border border-gray-100/50"
+                    className="py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 flex items-center justify-center gap-1.5 transition-all text-xs font-bold border border-gray-100"
                   >
-                    <Edit2 size={13} /> Edit Order
+                    <Edit2 size={14} /> Edit Order
                   </Link>
                   <button
                     onClick={() => handleDelete(order.id, order.order_number)}
-                    className="py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center gap-1.5 transition-colors text-[11px] font-bold border border-red-100/50"
+                    className="py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 flex items-center justify-center gap-1.5 transition-all text-xs font-bold border border-red-100"
                   >
-                    <Trash2 size={13} /> Delete
+                    <Trash2 size={14} /> Delete
                   </button>
                 </div>
               </div>

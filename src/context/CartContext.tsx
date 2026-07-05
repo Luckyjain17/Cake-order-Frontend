@@ -17,16 +17,47 @@ const CartContext = createContext<CartContextType | null>(null)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
+    if (typeof window === 'undefined') return []
+
     try {
-      return JSON.parse(localStorage.getItem(CART_KEY) || '[]')
+      const stored = window.localStorage.getItem(CART_KEY)
+      if (!stored) return []
+
+      const parsed = JSON.parse(stored)
+      return Array.isArray(parsed) ? parsed : []
     } catch {
       return []
     }
   })
 
   useEffect(() => {
-    localStorage.setItem(CART_KEY, JSON.stringify(items))
+    try {
+      window.localStorage.setItem(CART_KEY, JSON.stringify(items))
+    } catch {
+      // Ignore storage write issues
+    }
   }, [items])
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== CART_KEY) return
+      try {
+        if (!event.newValue) {
+          setItems([])
+          return
+        }
+        const parsed = JSON.parse(event.newValue)
+        if (Array.isArray(parsed)) {
+          setItems(parsed)
+        }
+      } catch {
+        // Ignore invalid storage updates
+      }
+    }
+
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
 
   const addItem = (newItem: CartItem) => {
     setItems((prev) => {

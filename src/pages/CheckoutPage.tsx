@@ -5,12 +5,14 @@ import { motion } from 'framer-motion'
 import api, { getImageUrl } from '@/lib/api'
 import toast from 'react-hot-toast'
 import { useQuery } from '@tanstack/react-query'
+import { QrCode, MessageCircle, AlertTriangle, HelpCircle, Phone } from 'lucide-react'
 
 export default function CheckoutPage() {
   const { items, totalAmount, clearCart } = useCart()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
 
   const { data: storeSetting } = useQuery({
     queryKey: ['settings', 'store_status'],
@@ -43,11 +45,7 @@ export default function CheckoutPage() {
   })
   const isUpiOffline = !upiIdSetting?.value && !customQrUrl
 
-  const { data: whatsappSetting } = useQuery({
-    queryKey: ['settings', 'whatsapp_number'],
-    queryFn: () => api.get('/settings/whatsapp_number').then((r) => r.data).catch(() => null),
-  })
-  const activeWhatsappNumber = whatsappSetting?.value || import.meta.env.VITE_WHATSAPP_NUMBER || '918269412418'
+  const activeWhatsappNumber = '918269412418';
 
   if (isClosed) {
     return (
@@ -95,14 +93,14 @@ export default function CheckoutPage() {
       const itemsList = items
         .map((item) => `• *${item.name}* x ${item.qty} (${item.weight || 'Standard'})\n  🔗 Link: ${window.location.origin}/product/${item.product_id}`)
         .join('\n')
-      
+
       const waMsg = `Hello! I would like to place an order:\n\n📋 *Order ID:* #${data.order_number}\n🛍️ *Items:* \n${itemsList}\n\n💰 *Total Amount:* ₹${totalAmount}\n\nPlease confirm my order. Thank you!`
 
       toast.success('Order recorded! Redirecting to WhatsApp...')
-      
+
       clearCart()
       navigate('/', { replace: true })
-      
+
       // Delay slightly for toast/state updates, then redirect
       setTimeout(() => {
         window.location.href = `https://wa.me/${activeWhatsappNumber}?text=${encodeURIComponent(waMsg)}`
@@ -169,9 +167,19 @@ export default function CheckoutPage() {
   return (
     <div className="pb-nav">
       <div className="page-container py-6 max-w-lg mx-auto space-y-6">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-gray-900">Checkout</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Please review your order details below</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-gray-900">Checkout</h1>
+            <p className="text-sm text-gray-400 mt-0.5">Please review your order details below</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowHelpModal(true)}
+            className="flex items-center gap-1.5 rounded-full border border-pink-100 bg-pink-50 px-3 py-2 text-xs font-semibold text-primary-600 shadow-sm transition-all hover:bg-pink-100"
+          >
+            <HelpCircle size={14} />
+            Help
+          </button>
         </div>
 
         {/* Order summary */}
@@ -202,14 +210,14 @@ export default function CheckoutPage() {
             whileTap={isUpiOffline ? undefined : { scale: 0.97 }}
             onClick={isUpiOffline ? undefined : () => setShowModal(true)}
             disabled={loading || isUpiOffline}
-            className={`w-full text-lg py-4 flex items-center justify-center gap-2 rounded-2xl font-bold transition-all ${isUpiOffline ? 'bg-gray-150 text-gray-400 cursor-not-allowed border border-gray-200' : 'btn-primary'}`}
+            className={`w-full text-base py-4 flex items-center justify-center gap-2.5 rounded-2xl font-bold shadow-soft transition-all ${isUpiOffline ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : 'btn-primary bg-gradient-to-r from-primary-500 to-rose-500 hover:from-primary-600 hover:to-rose-600 text-white'}`}
           >
             {loading ? (
-              <span>Processing...</span>
+              <span className="text-sm font-semibold">Processing...</span>
             ) : (
               <>
-                <span>📱</span>
-                <span>{isUpiOffline ? 'UPI Payment (Temporarily Offline)' : 'Pay via UPI / QR Code (Barcode)'}</span>
+                <QrCode size={20} />
+                <span>{isUpiOffline ? 'UPI Payment (Temporarily Offline)' : 'Pay via UPI / QR Code'}</span>
               </>
             )}
           </motion.button>
@@ -218,13 +226,13 @@ export default function CheckoutPage() {
             whileTap={{ scale: 0.97 }}
             onClick={handleWhatsAppOrder}
             disabled={loading}
-            className="w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20ba56] text-white font-bold text-lg flex items-center justify-center gap-2 shadow-soft active:scale-95 transition-all disabled:opacity-50"
+            className="w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20ba56] text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-soft active:scale-95 transition-all disabled:opacity-50"
           >
             {loading ? (
-              <span>Processing...</span>
+              <span className="text-sm font-semibold">Processing...</span>
             ) : (
               <>
-                <span>💬</span>
+                <MessageCircle size={20} />
                 <span>Order via WhatsApp Directly</span>
               </>
             )}
@@ -235,12 +243,66 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center space-y-4 shadow-lifted animate-scale-in">
+            <div className="w-16 h-16 bg-pink-50 text-primary-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <HelpCircle size={28} />
+            </div>
+            <h3 className="font-bold text-gray-900 text-lg">Need help?</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Reach out to us directly for order support, custom cake requests, or payment help.
+            </p>
+
+            <div className="space-y-2 pt-2">
+              <a
+                href="tel:+918269412418"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50"
+              >
+                <Phone size={16} className="text-primary-500" />
+                Call Support
+              </a>
+              <a
+                href="https://www.instagram.com/homemade_mapas_cakes?igsh=b28xZTN2NTVucjF0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-pink-500"
+                >
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                </svg>
+                Instagram
+              </a>
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="w-full rounded-2xl bg-gray-50 px-4 py-3 text-sm font-bold text-gray-500 transition-all hover:bg-gray-100"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Screenshot Warning Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center space-y-4 shadow-lifted animate-scale-in">
-            <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto text-3xl">
-              ⚠️
+            <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <AlertTriangle size={28} />
             </div>
             <h3 className="font-bold text-gray-900 text-lg">Screenshot Required!</h3>
             <p className="text-gray-600 text-sm leading-relaxed">

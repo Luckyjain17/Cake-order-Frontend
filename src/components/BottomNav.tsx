@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Search, ShoppingBag, Grid3X3 } from 'lucide-react'
+import { Home, ShoppingBag, Cake } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { motion } from 'framer-motion'
 
 const nav = [
-  { to: '/shop', label: 'Shop', icon: Grid3X3 },
+  { to: '/', label: 'Home', icon: Home },
+  { to: '/shop', label: 'Shop', icon: Cake },
   { to: '/cart', label: 'Cart', icon: ShoppingBag },
 ]
 
@@ -16,7 +17,7 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-100 safe-area-pb md:hidden">
       <div className="flex items-center justify-around h-16">
         {nav.map(({ to, label, icon: Icon }) => {
-          const active = pathname === to || (to !== '/' && pathname.startsWith(to))
+          const active = to === '/' ? pathname === '/' : pathname.startsWith(to)
           return (
             <Link key={to} to={to} className="flex flex-col items-center gap-0.5 relative">
               <motion.div

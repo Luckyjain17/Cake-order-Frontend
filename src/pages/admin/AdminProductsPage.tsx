@@ -44,9 +44,14 @@ export default function AdminProductsPage() {
     <div className="p-4 pb-8 space-y-4 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold text-gray-900">Products</h1>
-        <Link to="/admin/products/new" className="btn-primary flex items-center gap-1.5">
-          <Plus size={16} /> Add Product
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/admin/products/bulk" className="btn-secondary flex items-center gap-1.5 text-xs font-bold">
+            <Plus size={14} /> Bulk Add
+          </Link>
+          <Link to="/admin/products/new" className="btn-primary flex items-center gap-1.5 text-xs font-bold">
+            <Plus size={14} /> Add Product
+          </Link>
+        </div>
       </div>
 
       {/* Search */}

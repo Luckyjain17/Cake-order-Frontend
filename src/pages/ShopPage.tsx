@@ -104,16 +104,7 @@ export default function ShopPage() {
             >
               All Cakes
             </button>
-            <button
-              onClick={() =>
-                setChipFilter({ filter: filter === 'trending' ? null : 'trending', category: null, flavor: null, cake_type: null })
-              }
-              className={`flex-shrink-0 px-4 py-1.5 rounded-2xl text-xs font-bold transition-all ${
-                filter === 'trending' ? 'bg-primary-500 text-white shadow-soft' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              🔥 Trending
-            </button>
+
             {categories?.map((cat) => (
               <button
                 key={cat.id}
@@ -129,7 +120,7 @@ export default function ShopPage() {
                   categoryId === String(cat.id) ? 'bg-primary-500 text-white shadow-soft' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                {cat.icon} {cat.name}
+                {cat.name}
               </button>
             ))}
             <div className="w-24 flex-shrink-0" />

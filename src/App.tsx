@@ -23,6 +23,7 @@ import AdminProductFormPage from '@/pages/admin/AdminProductFormPage'
 import AdminOrdersPage from '@/pages/admin/AdminOrdersPage'
 import AdminManualOrderPage from '@/pages/admin/AdminManualOrderPage'
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
+import AdminBulkProductAddPage from '@/pages/admin/AdminBulkProductAddPage'
 
 function CustomerLayout() {
   return (
@@ -65,6 +66,7 @@ export default function App() {
             <Route path="/admin/dashboard" element={<AdminGuard><AdminDashboardPage /></AdminGuard>} />
             <Route path="/admin/products" element={<AdminGuard><AdminProductsPage /></AdminGuard>} />
             <Route path="/admin/products/new" element={<AdminGuard><AdminProductFormPage /></AdminGuard>} />
+            <Route path="/admin/products/bulk" element={<AdminGuard><AdminBulkProductAddPage /></AdminGuard>} />
             <Route path="/admin/products/edit/:id" element={<AdminGuard><AdminProductFormPage /></AdminGuard>} />
             <Route path="/admin/orders" element={<AdminGuard><AdminOrdersPage /></AdminGuard>} />
             <Route path="/admin/orders/new" element={<AdminGuard><AdminManualOrderPage /></AdminGuard>} />
