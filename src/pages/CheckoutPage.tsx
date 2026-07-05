@@ -14,6 +14,11 @@ export default function CheckoutPage() {
   const [showModal, setShowModal] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
 
+  const formatRupee = (v: number | string | undefined) => {
+    const n = Number(v) || 0
+    return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 1 }).format(n)
+  }
+
   const { data: storeSetting } = useQuery({
     queryKey: ['settings', 'store_status'],
     queryFn: () => api.get('/settings/store_status').then((r) => r.data).catch(() => null),
@@ -187,53 +192,54 @@ export default function CheckoutPage() {
           <h2 className="font-semibold text-gray-800 text-sm">{items.length} item(s) in cart</h2>
           <div className="space-y-3">
             {items.map((item) => (
-              <div key={`${item.product_id}-${item.weight}`} className="flex justify-between text-sm text-gray-600">
-                <span className="truncate mr-3">
-                  {item.name} <span className="text-gray-400 font-medium">× {item.qty}</span>
-                  {item.weight && <span className="text-gray-400 text-xs ml-1">({item.weight})</span>}
-                </span>
-                <span className="font-bold text-gray-700 flex-shrink-0">
-                  ₹{(item.price * item.qty).toLocaleString()}
-                </span>
+              <div key={`${item.product_id}-${item.weight}`} className="flex justify-between items-center text-sm text-gray-600">
+                <div className="truncate mr-3">
+                  <div className="font-medium text-gray-800">{item.name}</div>
+                  <div className="text-xs text-gray-400">× {item.qty} {item.weight && <>• {item.weight}</>}</div>
+                </div>
+                <div className="font-bold text-gray-700 flex-shrink-0">₹{formatRupee(item.price * item.qty)}</div>
               </div>
             ))}
           </div>
-          <div className="border-t border-dashed border-gray-100 pt-3 flex justify-between font-bold text-base text-gray-900">
-            <span>Total Amount</span>
-            <span className="text-primary-500">₹{totalAmount.toLocaleString()}</span>
+          <div className="border-t border-dashed border-gray-100 pt-3 flex justify-between items-center">
+            <div>
+              <div className="text-sm text-gray-600">Total Amount</div>
+              <div className="text-xs text-gray-400">Including taxes & charges</div>
+            </div>
+            <div className="text-primary-500 font-extrabold text-lg">₹{formatRupee(totalAmount)}</div>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="space-y-3">
           <motion.button
-            whileTap={isUpiOffline ? undefined : { scale: 0.97 }}
+            whileTap={isUpiOffline ? undefined : { scale: 0.98 }}
             onClick={isUpiOffline ? undefined : () => setShowModal(true)}
             disabled={loading || isUpiOffline}
-            className={`w-full text-base py-4 flex items-center justify-center gap-2.5 rounded-2xl font-bold shadow-soft transition-all ${isUpiOffline ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : 'btn-primary bg-gradient-to-r from-primary-500 to-rose-500 hover:from-primary-600 hover:to-rose-600 text-white'}`}
+            className={`w-full text-base py-4 flex items-center justify-center gap-3 rounded-3xl font-bold transition-transform transform ${isUpiOffline ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' : 'bg-gradient-to-r from-[#ff6b8b] to-[#ff4d6d] text-white shadow-2xl hover:-translate-y-0.5'}`}
           >
             {loading ? (
               <span className="text-sm font-semibold">Processing...</span>
             ) : (
               <>
-                <QrCode size={20} />
-                <span>{isUpiOffline ? 'UPI Payment (Temporarily Offline)' : 'Pay via UPI / QR Code'}</span>
+                <QrCode size={22} />
+                <span className="text-lg">{isUpiOffline ? 'UPI Payment (Temporarily Offline)' : 'Pay via UPI / QR Code'}</span>
               </>
             )}
           </motion.button>
 
           <motion.button
-            whileTap={{ scale: 0.97 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleWhatsAppOrder}
             disabled={loading}
-            className="w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20ba56] text-white font-bold text-base flex items-center justify-center gap-2.5 shadow-soft active:scale-95 transition-all disabled:opacity-50"
+            className="w-full py-4 rounded-3xl bg-[#25D366] hover:bg-[#20ba56] text-white font-bold text-lg flex items-center justify-center gap-3 shadow-2xl active:scale-95 transition-transform disabled:opacity-60"
           >
             {loading ? (
               <span className="text-sm font-semibold">Processing...</span>
             ) : (
               <>
-                <MessageCircle size={20} />
-                <span>Order via WhatsApp Directly</span>
+                <MessageCircle size={22} />
+                <span>Order via WhatsApp</span>
               </>
             )}
           </motion.button>
