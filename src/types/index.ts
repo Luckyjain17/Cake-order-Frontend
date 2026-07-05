@@ -1,5 +1,5 @@
 export interface ProductImage {
-  id: number
+  id: string | number
   cloudinary_public_id: string
   url: string
   thumbnail_url?: string
