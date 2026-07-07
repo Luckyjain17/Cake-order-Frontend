@@ -31,6 +31,7 @@ interface BulkRow {
   localFiles: { id: string; file: File }[]
   addWeightKg: number
   addWeightG: number
+  flavor_rates: string
 }
 
 const SHAPES = ['Round', 'Square', 'Heart', 'Rectangle', 'Custom']
@@ -177,7 +178,8 @@ export default function AdminBulkProductAddPage() {
       images: [],
       localFiles: [],
       addWeightKg: 0,
-      addWeightG: 500
+      addWeightG: 500,
+      flavor_rates: '{}'
     }
   ])
   const [loading, setLoading] = useState(false)
@@ -450,6 +452,29 @@ export default function AdminBulkProductAddPage() {
     )
   }
 
+  const updateBulkRowFlavorRate = (rowId: string, flavor: string, key: 'selling_price' | 'original_price', value: string) => {
+    setRows(prevRows =>
+      prevRows.map((r) => {
+        if (r.id !== rowId) return r
+        let rates: any = {}
+        try {
+          rates = typeof r.flavor_rates === 'string' ? JSON.parse(r.flavor_rates || '{}') : (r.flavor_rates || {})
+        } catch {
+          rates = {}
+        }
+        const current = rates[flavor] || {}
+        rates[flavor] = {
+          ...current,
+          [key]: value === '' ? undefined : parseFloat(value) || 0
+        }
+        if (rates[flavor].selling_price === undefined && rates[flavor].original_price === undefined) {
+          delete rates[flavor]
+        }
+        return { ...r, flavor_rates: JSON.stringify(rates) }
+      })
+    )
+  }
+
   const toggleShape = (rowId: string, shapeName: string) => {
     setRows(prevRows =>
       prevRows.map((r) => {
@@ -495,7 +520,8 @@ export default function AdminBulkProductAddPage() {
           is_best_seller: r.is_best_seller,
           is_trending: r.is_trending,
           is_new_arrival: r.is_new_arrival,
-          is_eggless: true
+          is_eggless: true,
+          flavor_rates: r.flavor_rates || '{}'
         }
       })
 
@@ -591,7 +617,8 @@ export default function AdminBulkProductAddPage() {
           images: [],
           localFiles: [],
           addWeightKg: 0,
-          addWeightG: 500
+          addWeightG: 500,
+          flavor_rates: typeof item.flavor_rates === 'object' ? JSON.stringify(item.flavor_rates) : String(item.flavor_rates || '{}')
         }
       })
 
@@ -617,6 +644,7 @@ export default function AdminBulkProductAddPage() {
       const priceIndex = headers.indexOf('price') !== -1 ? headers.indexOf('price') : headers.indexOf('selling_price')
       const discountIndex = headers.indexOf('discount') !== -1 ? headers.indexOf('discount') : headers.indexOf('discount_percent')
       const flavorIndex = headers.indexOf('flavor') !== -1 ? headers.indexOf('flavor') : headers.indexOf('flavors')
+      const flavorRatesIndex = headers.indexOf('flavor_rates')
       const shapeIndex = headers.indexOf('shape')
       const descIndex = headers.indexOf('description') !== -1 ? headers.indexOf('description') : headers.indexOf('short_description')
 
@@ -654,7 +682,8 @@ export default function AdminBulkProductAddPage() {
           images: [],
           localFiles: [],
           addWeightKg: 0,
-          addWeightG: 500
+          addWeightG: 500,
+          flavor_rates: flavorRatesIndex !== -1 ? values[flavorRatesIndex] || '{}' : '{}'
         })
       }
 
@@ -931,20 +960,11 @@ export default function AdminBulkProductAddPage() {
             </Section>
 
             <Section title="Pricing">
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Selling Price (₹)" required>
-                  <input
-                    className="input text-lg font-semibold"
-                    type="number"
-                    required
-                    value={row.selling_price}
-                    onChange={(e) => updateRow(row.id, 'selling_price', e.target.value)}
-                    placeholder="e.g. 600"
-                  />
-                </Field>
+              {/* Discount */}
+              <div className="bg-gray-50/50 p-3.5 rounded-xl border border-gray-100 mb-3">
                 <Field label="Discount Percent (%)">
                   <input
-                    className="input text-lg font-semibold"
+                    className="input bg-white font-semibold"
                     type="number"
                     min="0"
                     max="100"
@@ -953,6 +973,113 @@ export default function AdminBulkProductAddPage() {
                     placeholder="e.g. 10"
                   />
                 </Field>
+              </div>
+
+              {/* Flavors & Prices */}
+              <div className="bg-white p-3.5 rounded-xl border border-gray-100 space-y-3">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Flavors & Prices</h4>
+                {selectedFlavors.length === 0 ? (
+                  <Field label="Selling Price (₹)" required>
+                    <input
+                      className="input font-semibold"
+                      type="number"
+                      required
+                      value={row.selling_price}
+                      onChange={(e) => updateRow(row.id, 'selling_price', e.target.value)}
+                      placeholder="e.g. 600"
+                    />
+                  </Field>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="pb-2.5 border-b border-gray-100">
+                      <Field label="Default Flavor">
+                        <select
+                          className="input bg-white cursor-pointer"
+                          value={selectedFlavors[0] || ''}
+                          onChange={(e) => {
+                            const nextDefault = e.target.value
+                            const oldDefault = selectedFlavors[0]
+                            if (nextDefault === oldDefault) return
+
+                            let rates: any = {}
+                            try {
+                              rates = typeof row.flavor_rates === 'string' ? JSON.parse(row.flavor_rates || '{}') : (row.flavor_rates || {})
+                            } catch {
+                              rates = {}
+                            }
+
+                            const nextDefaultPrice = rates[nextDefault]?.selling_price !== undefined ? rates[nextDefault].selling_price : row.selling_price
+                            const oldDefaultPrice = row.selling_price
+
+                            rates[oldDefault] = {
+                              ...rates[oldDefault],
+                              selling_price: parseFloat(oldDefaultPrice) || 0
+                            }
+                            delete rates[nextDefault]
+
+                            const remaining = selectedFlavors.filter((f) => f !== nextDefault)
+                            const nextFlavors = [nextDefault, ...remaining]
+
+                            setRows(prevRows =>
+                              prevRows.map(r => {
+                                if (r.id !== row.id) return r
+                                return {
+                                  ...r,
+                                  flavor: nextFlavors.join(', '),
+                                  selling_price: String(nextDefaultPrice),
+                                  flavor_rates: JSON.stringify(rates)
+                                }
+                              })
+                            )
+                          }}
+                        >
+                          {selectedFlavors.map((flv) => (
+                            <option key={flv} value={flv}>
+                              {flv}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+
+                    <div className="space-y-3">
+                      {selectedFlavors.map((flv, idx) => {
+                        const isDefault = idx === 0
+                        let rates: any = {}
+                        try {
+                          rates = typeof row.flavor_rates === 'string' ? JSON.parse(row.flavor_rates || '{}') : (row.flavor_rates || {})
+                        } catch {
+                          rates = {}
+                        }
+                        const rate = rates[flv] || {}
+                        const priceValue = isDefault ? row.selling_price : (rate.selling_price !== undefined ? rate.selling_price : '')
+
+                        return (
+                          <div key={flv} className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-gray-600 w-24 truncate">
+                              🍰 {flv} {isDefault && <span className="text-[10px] text-primary-500 font-normal ml-0.5">(Def)</span>}
+                            </span>
+                            <input
+                              type="number"
+                              min={0}
+                              placeholder="Price (₹)"
+                              className="input text-xs flex-1 py-1 font-semibold"
+                              value={priceValue}
+                              onChange={(e) => {
+                                if (isDefault) {
+                                  updateRow(row.id, 'selling_price', e.target.value)
+                                } else {
+                                  updateBulkRowFlavorRate(row.id, flv, 'selling_price', e.target.value)
+                                }
+                              }}
+                              required
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </Section>
 

@@ -10,6 +10,7 @@ import toast from 'react-hot-toast'
 export default function AdminProductsPage() {
   const [search, setSearch] = useState('')
   const qc = useQueryClient()
+  const [selectedFlavorsMap, setSelectedFlavorsMap] = useState<Record<number, string>>({})
 
   const { data, fetchNextPage, hasNextPage, isLoading } = useInfiniteQuery<PaginatedProducts>({
     queryKey: ['adminProducts', search],
@@ -104,6 +105,21 @@ export default function AdminProductsPage() {
               <tbody className="divide-y divide-gray-50 text-sm">
                 {products.map((product) => {
                   const imageUrl = getImageUrl(product.cover_image?.thumbnail_url || product.cover_image?.url)
+                  const flvs = product.flavor ? product.flavor.split(',').map((x: string) => x.trim()).filter(Boolean) : []
+                  const currentFlavor = selectedFlavorsMap[product.id] || flvs[0] || ''
+                  
+                  const sellingPrice = (() => {
+                    if (currentFlavor && currentFlavor !== flvs[0]) {
+                      try {
+                        const rates = product.flavor_rates ? JSON.parse(product.flavor_rates) : {}
+                        if (rates[currentFlavor] && rates[currentFlavor].selling_price !== undefined) {
+                          return rates[currentFlavor].selling_price
+                        }
+                      } catch {}
+                    }
+                    return product.selling_price
+                  })()
+
                   return (
                     <tr key={product.id} className="hover:bg-gray-50/50 transition-colors">
                       {/* Image & Title */}
@@ -118,8 +134,19 @@ export default function AdminProductsPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-gray-900 truncate">{product.name}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              {product.flavor || '—'}
+                            <p className="text-xs text-gray-400 mt-0.5 flex items-center flex-wrap gap-1">
+                              <span>{product.flavor || '—'}</span>
+                              {flvs.length > 1 && (
+                                <select
+                                  value={currentFlavor}
+                                  onChange={(e) => setSelectedFlavorsMap(prev => ({ ...prev, [product.id]: e.target.value }))}
+                                  className="py-0.5 px-1.5 text-[10px] font-bold text-primary-500 bg-primary-50 border border-primary-200 rounded cursor-pointer outline-none"
+                                >
+                                  {flvs.map(f => (
+                                    <option key={f} value={f}>{f}</option>
+                                  ))}
+                                </select>
+                              )}
                               {product.price_base_weight ? ` • ${product.price_base_weight}` : ''}
                             </p>
                           </div>
@@ -127,7 +154,7 @@ export default function AdminProductsPage() {
                       </td>
                       {/* Price */}
                       <td className="px-6 py-4 font-bold text-gray-900">
-                        ₹{product.selling_price}
+                        ₹{sellingPrice}
                       </td>
                       {/* Discount */}
                       <td className="px-6 py-4">
@@ -177,8 +204,23 @@ export default function AdminProductsPage() {
           <div className="md:hidden space-y-3">
             {products.map((product) => {
               const imageUrl = getImageUrl(product.cover_image?.thumbnail_url || product.cover_image?.url)
+              const flvs = product.flavor ? product.flavor.split(',').map((x: string) => x.trim()).filter(Boolean) : []
+              const currentFlavor = selectedFlavorsMap[product.id] || flvs[0] || ''
+              
+              const sellingPrice = (() => {
+                if (currentFlavor && currentFlavor !== flvs[0]) {
+                  try {
+                    const rates = product.flavor_rates ? JSON.parse(product.flavor_rates) : {}
+                    if (rates[currentFlavor] && rates[currentFlavor].selling_price !== undefined) {
+                      return rates[currentFlavor].selling_price
+                    }
+                  } catch {}
+                }
+                return product.selling_price
+              })()
+
               return (
-                <div key={product.id} className="card p-3.5 flex gap-3.5 items-center border border-gray-100 shadow-sm bg-white">
+                <div key={product.id} className="card p-3.5 flex gap-3.5 items-center border border-gray-150/70 shadow-sm bg-white">
                   {/* Image */}
                   <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
                     {imageUrl ? (
@@ -191,10 +233,21 @@ export default function AdminProductsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-1">
                       <p className="font-semibold text-sm text-gray-900 truncate">{product.name}</p>
-                      <span className="font-bold text-sm text-primary-500 flex-shrink-0">₹{product.selling_price}</span>
+                      <span className="font-bold text-sm text-primary-500 flex-shrink-0">₹{sellingPrice}</span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {product.flavor || '—'}
+                    <p className="text-xs text-gray-400 mt-0.5 flex items-center flex-wrap gap-1">
+                      <span>{product.flavor || '—'}</span>
+                      {flvs.length > 1 && (
+                        <select
+                          value={currentFlavor}
+                          onChange={(e) => setSelectedFlavorsMap(prev => ({ ...prev, [product.id]: e.target.value }))}
+                          className="py-0.5 px-1.5 text-[10px] font-bold text-primary-500 bg-primary-50 border border-primary-200 rounded cursor-pointer outline-none"
+                        >
+                          {flvs.map(f => (
+                            <option key={f} value={f}>{f}</option>
+                          ))}
+                        </select>
+                      )}
                       {product.price_base_weight ? ` • ${product.price_base_weight}` : ''}
                     </p>
 

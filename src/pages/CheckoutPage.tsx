@@ -87,6 +87,7 @@ export default function CheckoutPage() {
           weight: i.weight,
           price: i.price,
           image_url: i.image_url,
+          flavor: i.flavor || null,
         })),
         subtotal: totalAmount,
         total_amount: totalAmount,
@@ -96,7 +97,7 @@ export default function CheckoutPage() {
 
       // Generate a clean summary message with direct product page links (using ID for uniqueness)
       const itemsList = items
-        .map((item) => `• *${item.name}* x ${item.qty} (${item.weight || 'Standard'})\n  🔗 Link: ${window.location.origin}/product/${item.product_id}`)
+        .map((item) => `• *${item.name}* x ${item.qty} (${item.weight || 'Standard'}${item.flavor ? ` - Flavor: ${item.flavor}` : ''})\n  🔗 Link: ${window.location.origin}/product/${item.product_id}`)
         .join('\n')
 
       const waMsg = `Hello! I would like to place an order:\n\n📋 *Order ID:* #${data.order_number}\n🛍️ *Items:* \n${itemsList}\n\n💰 *Total Amount:* ₹${totalAmount}\n\nPlease confirm my order. Thank you!`
@@ -192,10 +193,10 @@ export default function CheckoutPage() {
           <h2 className="font-semibold text-gray-800 text-sm">{items.length} item(s) in cart</h2>
           <div className="space-y-3">
             {items.map((item) => (
-              <div key={`${item.product_id}-${item.weight}`} className="flex justify-between items-center text-sm text-gray-600">
+              <div key={`${item.product_id}-${item.weight}-${item.flavor || ''}`} className="flex justify-between items-center text-sm text-gray-600">
                 <div className="truncate mr-3">
                   <div className="font-medium text-gray-800">{item.name}</div>
-                  <div className="text-xs text-gray-400">× {item.qty} {item.weight && <>• {item.weight}</>}</div>
+                  <div className="text-xs text-gray-400">× {item.qty} {item.weight && <>• {item.weight}</>}{item.flavor && <> • Flavor: {item.flavor}</>}</div>
                 </div>
                 <div className="font-bold text-gray-700 flex-shrink-0">₹{formatRupee(item.price * item.qty)}</div>
               </div>

@@ -46,6 +46,7 @@ const blank = {
   preparation_time: '3 hours',
   storage_instructions: 'Store in refrigerator.',
   is_customizable: false, is_available: true, is_best_seller: false, is_trending: false, is_new_arrival: true,
+  flavor_rates: '{}',
 }
 
 function parsePrepTime(timeStr: string = ''): { hours: number; minutes: number } {
@@ -227,6 +228,7 @@ export default function AdminProductFormPage() {
         is_best_seller: product.is_best_seller,
         is_trending: product.is_trending,
         is_new_arrival: product.is_new_arrival,
+        flavor_rates: product.flavor_rates || '{}',
       })
       setImages(product.images || [])
       setSavedProductId(product.id)
@@ -253,6 +255,26 @@ export default function AdminProductFormPage() {
       nextFlavors = [...selectedFlavors, f]
     }
     setForm((oldForm: any) => ({ ...oldForm, flavor: nextFlavors.join(', ') }))
+  }
+
+  const updateFlavorRate = (flavor: string, key: 'selling_price' | 'original_price', value: string) => {
+    setForm((f: any) => {
+      let rates: any = {}
+      try {
+        rates = typeof f.flavor_rates === 'string' ? JSON.parse(f.flavor_rates || '{}') : (f.flavor_rates || {})
+      } catch (e) {
+        rates = {}
+      }
+      const current = rates[flavor] || {}
+      rates[flavor] = {
+        ...current,
+        [key]: value === '' ? undefined : parseFloat(value) || 0
+      }
+      if (rates[flavor].selling_price === undefined && rates[flavor].original_price === undefined) {
+        delete rates[flavor]
+      }
+      return { ...f, flavor_rates: JSON.stringify(rates) }
+    })
   }
 
   const addWeight = () => {
@@ -679,27 +701,125 @@ export default function AdminProductFormPage() {
 
         {/* Pricing */}
         <Section title="Pricing">
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="Price (₹)" required>
-              <input className="input" type="number" min={0} value={form.selling_price} onChange={set('selling_price')} placeholder="₹ Price" required />
-            </Field>
-            <Field label="Discount (%)">
-              <input className="input" type="number" min={0} max={100} value={form.discount_percent} onChange={set('discount_percent')} placeholder="% Optional" />
-            </Field>
-            <Field label="Base Weight">
-              <select
-                className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-gray-50 border border-gray-200"
-                value={form.price_base_weight}
-                onChange={set('price_base_weight')}
-              >
-                {selectedWeights.length === 0 && (
-                  <option value="">— select weight options first —</option>
-                )}
-                {selectedWeights.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </Field>
+          {/* Sub-section 1: Discount & Base Weight */}
+          <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Discount & Weight Settings</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Discount (%)">
+                <input className="input bg-white" type="number" min={0} max={100} value={form.discount_percent} onChange={set('discount_percent')} placeholder="% Optional" />
+              </Field>
+              <Field label="Base Weight">
+                <select
+                  className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-white border border-gray-200"
+                  value={form.price_base_weight}
+                  onChange={set('price_base_weight')}
+                >
+                  {selectedWeights.length === 0 && (
+                    <option value="">— select weight options first —</option>
+                  )}
+                  {selectedWeights.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+          </div>
+
+          {/* Sub-section 2: Flavors & Prices */}
+          <div className="bg-white p-4 rounded-2xl border border-gray-100 space-y-3 mt-3">
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Flavors & Prices</h3>
+            {selectedFlavors.length === 0 ? (
+              <Field label="Price (₹)" required>
+                <input className="input" type="number" min={0} value={form.selling_price} onChange={set('selling_price')} placeholder="₹ Price" required />
+              </Field>
+            ) : (
+              <div className="space-y-3">
+                <div className="pb-3 border-b border-gray-100">
+                  <Field label="Default Flavor Selector">
+                    <select
+                      className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-gray-50 border border-gray-200"
+                      value={selectedFlavors[0] || ''}
+                      onChange={(e) => {
+                        const nextDefault = e.target.value
+                        const oldDefault = selectedFlavors[0]
+                        if (nextDefault === oldDefault) return
+
+                        let rates: any = {}
+                        try {
+                          rates = typeof form.flavor_rates === 'string' ? JSON.parse(form.flavor_rates || '{}') : (form.flavor_rates || {})
+                        } catch {
+                          rates = {}
+                        }
+
+                        const nextDefaultPrice = rates[nextDefault]?.selling_price !== undefined ? rates[nextDefault].selling_price : form.selling_price
+                        const oldDefaultPrice = form.selling_price
+
+                        rates[oldDefault] = {
+                          ...rates[oldDefault],
+                          selling_price: parseFloat(oldDefaultPrice) || 0
+                        }
+                        delete rates[nextDefault]
+
+                        const remaining = selectedFlavors.filter((f) => f !== nextDefault)
+                        const nextFlavors = [nextDefault, ...remaining]
+
+                        setForm((oldForm: any) => ({
+                          ...oldForm,
+                          flavor: nextFlavors.join(', '),
+                          selling_price: String(nextDefaultPrice),
+                          flavor_rates: JSON.stringify(rates)
+                        }))
+                      }}
+                    >
+                      {selectedFlavors.map((flv) => (
+                        <option key={flv} value={flv}>
+                          {flv}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+
+                <div className="space-y-3.5">
+                  {selectedFlavors.map((flv, idx) => {
+                    const isDefault = idx === 0
+                    let rates: any = {}
+                    try {
+                      rates = typeof form.flavor_rates === 'string' ? JSON.parse(form.flavor_rates || '{}') : (form.flavor_rates || {})
+                    } catch {
+                      rates = {}
+                    }
+                    const rate = rates[flv] || {}
+                    const priceValue = isDefault ? form.selling_price : (rate.selling_price !== undefined ? rate.selling_price : '')
+
+                    return (
+                      <div key={flv} className="flex items-center gap-3">
+                        <span className="font-bold text-sm text-gray-700 w-1/3 truncate">
+                          🍰 {flv} {isDefault && <span className="text-xs text-primary-500 font-normal ml-1">(Default)</span>}
+                        </span>
+                        <div className="flex-1">
+                          <input
+                            type="number"
+                            min={0}
+                            placeholder="Price (₹)"
+                            className="input text-sm w-full font-semibold"
+                            value={priceValue}
+                            onChange={(e) => {
+                              if (isDefault) {
+                                setForm((f: any) => ({ ...f, selling_price: e.target.value }))
+                              } else {
+                                updateFlavorRate(flv, 'selling_price', e.target.value)
+                              }
+                            }}
+                            required
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </Section>
 

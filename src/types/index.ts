@@ -20,6 +20,7 @@ export interface Product {
   category_id?: number
   cake_type?: string
   flavor?: string
+  flavor_rates?: string
   shape?: string
   weight_options?: string
   original_price: number
@@ -53,6 +54,7 @@ export interface ProductListItem {
   original_price: number
   discount_percent: number
   flavor?: string
+  flavor_rates?: string
   is_available: boolean
   is_best_seller: boolean
   is_trending: boolean
@@ -91,6 +93,7 @@ export interface CartItem {
   weight: string
   price: number
   qty: number
+  flavor?: string
 }
 
 export interface Order {

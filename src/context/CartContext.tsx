@@ -6,8 +6,8 @@ const CART_KEY = 'cake_cart'
 interface CartContextType {
   items: CartItem[]
   addItem: (item: CartItem) => void
-  removeItem: (product_id: number, weight: string) => void
-  updateQty: (product_id: number, weight: string, qty: number) => void
+  removeItem: (product_id: number, weight: string, flavor?: string) => void
+  updateQty: (product_id: number, weight: string, qty: number, flavor?: string) => void
   clearCart: () => void
   totalItems: number
   totalAmount: number
@@ -62,11 +62,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = (newItem: CartItem) => {
     setItems((prev) => {
       const existing = prev.find(
-        (i) => i.product_id === newItem.product_id && i.weight === newItem.weight,
+        (i) => i.product_id === newItem.product_id && i.weight === newItem.weight && i.flavor === newItem.flavor,
       )
       if (existing) {
         return prev.map((i) =>
-          i.product_id === newItem.product_id && i.weight === newItem.weight
+          i.product_id === newItem.product_id && i.weight === newItem.weight && i.flavor === newItem.flavor
             ? { ...i, qty: i.qty + newItem.qty }
             : i,
         )
@@ -75,18 +75,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const removeItem = (product_id: number, weight: string) => {
-    setItems((prev) => prev.filter((i) => !(i.product_id === product_id && i.weight === weight)))
+  const removeItem = (product_id: number, weight: string, flavor?: string) => {
+    setItems((prev) => prev.filter((i) => !(i.product_id === product_id && i.weight === weight && i.flavor === flavor)))
   }
 
-  const updateQty = (product_id: number, weight: string, qty: number) => {
+  const updateQty = (product_id: number, weight: string, qty: number, flavor?: string) => {
     if (qty <= 0) {
-      removeItem(product_id, weight)
+      removeItem(product_id, weight, flavor)
       return
     }
     setItems((prev) =>
       prev.map((i) =>
-        i.product_id === product_id && i.weight === weight ? { ...i, qty } : i,
+        i.product_id === product_id && i.weight === weight && i.flavor === flavor ? { ...i, qty } : i,
       ),
     )
   }

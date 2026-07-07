@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ShoppingBag, Star } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -14,6 +15,23 @@ interface Props {
 export default function ProductCard({ product }: Props) {
   const { addItem } = useCart()
   const imageUrl = getImageUrl(product.cover_image?.thumbnail_url || product.cover_image?.url)
+
+  const flvs = product.flavor ? product.flavor.split(',').map((x: string) => x.trim()).filter(Boolean) : []
+  const [selectedFlavor, setSelectedFlavor] = useState<string>(flvs[0] || '')
+
+  const rates = (() => {
+    try {
+      return product.flavor_rates ? JSON.parse(product.flavor_rates) : {}
+    } catch {
+      return {}
+    }
+  })()
+
+  const flavorRate = selectedFlavor ? rates[selectedFlavor] : null
+  const sellingPrice = (flavorRate && flavorRate.selling_price !== undefined) ? flavorRate.selling_price : product.selling_price
+  const originalPrice = product.discount_percent > 0
+    ? sellingPrice / (1 - product.discount_percent / 100)
+    : sellingPrice
 
   const { data: storeSetting } = useQuery({
     queryKey: ['settings', 'store_status'],
@@ -36,6 +54,7 @@ export default function ProductCard({ product }: Props) {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     if (isClosed) {
       toast.error('Store is closed. Ordering is disabled.')
       return
@@ -45,9 +64,10 @@ export default function ProductCard({ product }: Props) {
       name: product.name,
       slug: product.slug,
       image_url: imageUrl,
-      weight: '1kg',
-      price: product.selling_price,
+      weight: product.price_base_weight || '500g',
+      price: sellingPrice,
       qty: 1,
+      flavor: selectedFlavor || undefined,
     })
     toast.success('Added to cart! 🎂', { duration: 1500 })
   }
@@ -96,17 +116,43 @@ export default function ProductCard({ product }: Props) {
             {product.name}
           </p>
           {(product.flavor || product.price_base_weight) && (
-            <p className="text-xs text-gray-400 mt-0.5 truncate">
-              {product.flavor}
-              {product.flavor && product.price_base_weight && <span className="mx-1">•</span>}
-              {product.price_base_weight}
-            </p>
+            <div className="flex flex-wrap items-center gap-1.5 mt-1 min-h-[24px]">
+              {flvs.length > 1 ? (
+                <select
+                  value={selectedFlavor}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }}
+                  onChange={(e) => setSelectedFlavor(e.target.value)}
+                  className="appearance-none py-1 pl-2.5 pr-7 text-xs font-bold text-pink-600 bg-pink-50 hover:bg-pink-100/70 border border-pink-100 rounded-full cursor-pointer outline-none transition-all shadow-sm bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%2523db2777%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.1rem_1.1rem] bg-[right_0.4rem_center] bg-no-repeat"
+                >
+                  {flvs.map((f) => (
+                    <option key={f} value={f}>
+                      🍰 {f}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                product.flavor && (
+                  <span className="text-xs text-gray-400 truncate">
+                    {product.flavor}
+                  </span>
+                )
+              )}
+              {product.price_base_weight && (
+                <span className="text-xs text-gray-400">
+                  {flvs.length > 0 && <span className="mx-1">•</span>}
+                  {product.price_base_weight}
+                </span>
+              )}
+            </div>
           )}
           <div className="flex items-center justify-between mt-2">
             <div>
-              <span className="font-bold text-gray-900">₹{formatRupee(product.selling_price)}</span>
-              {product.original_price > product.selling_price && (
-                <span className="text-xs text-gray-400 line-through ml-1.5">₹{formatRupee(product.original_price)}</span>
+              <span className="font-bold text-gray-900">₹{formatRupee(sellingPrice)}</span>
+              {originalPrice > sellingPrice && (
+                <span className="text-xs text-gray-400 line-through ml-1.5">₹{formatRupee(originalPrice)}</span>
               )}
             </div>
             <motion.button

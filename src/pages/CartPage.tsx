@@ -49,7 +49,7 @@ export default function CartPage() {
           <AnimatePresence>
             {items.map((item) => (
               <motion.div
-                key={`${item.product_id}-${item.weight}`}
+                key={`${item.product_id}-${item.weight}-${item.flavor || ''}`}
                 layout
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -67,25 +67,27 @@ export default function CartPage() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 text-sm leading-tight truncate">{item.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{item.weight}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {item.weight}{item.flavor ? ` | Flavor: ${item.flavor}` : ''}
+                  </p>
                   <p className="text-primary-500 font-bold text-sm mt-1">₹{(item.price * item.qty).toLocaleString()}</p>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => updateQty(item.product_id, item.weight, item.qty - 1)}
+                    onClick={() => updateQty(item.product_id, item.weight, item.qty - 1, item.flavor)}
                     className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600"
                   >
                     <Minus size={12} />
                   </button>
                   <span className="w-5 text-center text-sm font-bold">{item.qty}</span>
                   <button
-                    onClick={() => updateQty(item.product_id, item.weight, item.qty + 1)}
+                    onClick={() => updateQty(item.product_id, item.weight, item.qty + 1, item.flavor)}
                     className="w-7 h-7 rounded-full bg-primary-100 text-primary-500 flex items-center justify-center"
                   >
                     <Plus size={12} />
                   </button>
                   <button
-                    onClick={() => removeItem(item.product_id, item.weight)}
+                    onClick={() => removeItem(item.product_id, item.weight, item.flavor)}
                     className="w-7 h-7 rounded-full bg-red-50 text-red-400 flex items-center justify-center ml-1"
                   >
                     <Trash2 size={12} />

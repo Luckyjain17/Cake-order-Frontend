@@ -43,6 +43,9 @@ export default function ProductDetailPage() {
   const [isCustomWeight, setIsCustomWeight] = useState(false)
   const [customWeight, setCustomWeight] = useState('3.5kg')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [selectedFlavor, setSelectedFlavor] = useState<string>('')
+
+
 
   const { data: storeSetting } = useQ({
     queryKey: ['settings', 'store_status'],
@@ -101,6 +104,17 @@ export default function ProductDetailPage() {
     }
   }, [product])
 
+  useEffect(() => {
+    if (product) {
+      const flvs = product.flavor
+        ? product.flavor.split(',').map((f: string) => f.trim()).filter(Boolean)
+        : []
+      if (flvs.length > 0 && !selectedFlavor) {
+        setSelectedFlavor(flvs[0])
+      }
+    }
+  }, [product, selectedFlavor])
+
   if (isLoading) {
     return (
       <div className="page-container py-6 pb-nav space-y-4">
@@ -134,9 +148,23 @@ export default function ProductDetailPage() {
     return parseKg(opt) > maxWeightKg
   })
 
+  const rates = (() => {
+    try {
+      return product.flavor_rates ? JSON.parse(product.flavor_rates) : {}
+    } catch {
+      return {}
+    }
+  })()
+
+  const flavorRate = selectedFlavor ? rates[selectedFlavor] : null
+  const baseSellingPrice = (flavorRate && flavorRate.selling_price !== undefined) ? flavorRate.selling_price : product.selling_price
+  const baseOriginalPrice = product.discount_percent > 0
+    ? baseSellingPrice / (1 - product.discount_percent / 100)
+    : baseSellingPrice
+
   const multiplier = getWeightMultiplier(selectedWeight, product.price_base_weight)
-  const multipliedSellingPrice = product.selling_price * multiplier
-  const multipliedOriginalPrice = product.original_price * multiplier
+  const multipliedSellingPrice = baseSellingPrice * multiplier
+  const multipliedOriginalPrice = baseOriginalPrice * multiplier
 
   const handleAddToCart = () => {
     if (isClosed) return
@@ -151,6 +179,7 @@ export default function ProductDetailPage() {
       image_url: imageUrl,
       qty,
       weight: selectedWeight,
+      flavor: selectedFlavor || undefined,
     })
     toast.success('Added to cart')
   }
@@ -237,17 +266,26 @@ export default function ProductDetailPage() {
             {flavors.length > 0 && (
               <div className="bg-gradient-to-br from-pink-50/50 to-purple-50/10 border border-pink-100/40 rounded-2xl p-4 space-y-2">
                 <label className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wider block">
-                  Available Flavors
+                  Select Flavor <span className="text-red-400">*</span>
                 </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {flavors.map((f) => (
-                    <span
-                      key={f}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white border border-pink-100 text-xs font-bold text-primary-500 shadow-sm"
-                    >
-                      🍰 {f}
-                    </span>
-                  ))}
+                <div className="flex flex-wrap gap-2">
+                  {flavors.map((f) => {
+                    const isSelected = selectedFlavor === f
+                    return (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setSelectedFlavor(f)}
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm ${
+                          isSelected
+                            ? 'bg-primary-500 border-primary-500 text-white'
+                            : 'bg-white border-pink-100 text-primary-500 hover:bg-pink-50/50'
+                        }`}
+                      >
+                        🍰 {f}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             )}
