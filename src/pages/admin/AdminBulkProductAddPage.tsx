@@ -751,10 +751,19 @@ export default function AdminBulkProductAddPage() {
       </div>
 
       <div className="space-y-10">
-        {rows.map((row, index) => (
-          <div key={row.id} className="relative bg-white rounded-3xl border border-gray-150 p-6 space-y-6 shadow-sm">
-            <div className="flex justify-between items-center pb-4 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-800">
+        {rows.map((row, index) => {
+          const selectedFlavors = row.flavor
+            ? row.flavor.split(',').map((x: string) => x.trim()).filter(Boolean) : []
+          let rates: any = {}
+          try {
+            rates = typeof row.flavor_rates === 'string' ? JSON.parse(row.flavor_rates || '{}') : (row.flavor_rates || {})
+          } catch {
+            rates = {}
+          }
+          return (
+            <div key={row.id} className="relative bg-white rounded-3xl border border-gray-150 p-6 space-y-6 shadow-sm">
+              <div className="flex justify-between items-center pb-4 border-b border-gray-100">
+                <h2 className="text-lg font-bold text-gray-800">
                 Cake Form #{index + 1} {row.name ? `- ${row.name}` : ''}
               </h2>
               {rows.length > 1 && (
@@ -1002,21 +1011,15 @@ export default function AdminBulkProductAddPage() {
                             const oldDefault = selectedFlavors[0]
                             if (nextDefault === oldDefault) return
 
-                            let rates: any = {}
-                            try {
-                              rates = typeof row.flavor_rates === 'string' ? JSON.parse(row.flavor_rates || '{}') : (row.flavor_rates || {})
-                            } catch {
-                              rates = {}
-                            }
-
                             const nextDefaultPrice = rates[nextDefault]?.selling_price !== undefined ? rates[nextDefault].selling_price : row.selling_price
                             const oldDefaultPrice = row.selling_price
 
-                            rates[oldDefault] = {
-                              ...rates[oldDefault],
+                            const updatedRates = { ...rates }
+                            updatedRates[oldDefault] = {
+                              ...updatedRates[oldDefault],
                               selling_price: parseFloat(oldDefaultPrice) || 0
                             }
-                            delete rates[nextDefault]
+                            delete updatedRates[nextDefault]
 
                             const remaining = selectedFlavors.filter((f) => f !== nextDefault)
                             const nextFlavors = [nextDefault, ...remaining]
@@ -1028,7 +1031,7 @@ export default function AdminBulkProductAddPage() {
                                   ...r,
                                   flavor: nextFlavors.join(', '),
                                   selling_price: String(nextDefaultPrice),
-                                  flavor_rates: JSON.stringify(rates)
+                                  flavor_rates: JSON.stringify(updatedRates)
                                 }
                               })
                             )
@@ -1046,12 +1049,6 @@ export default function AdminBulkProductAddPage() {
                     <div className="space-y-3">
                       {selectedFlavors.map((flv, idx) => {
                         const isDefault = idx === 0
-                        let rates: any = {}
-                        try {
-                          rates = typeof row.flavor_rates === 'string' ? JSON.parse(row.flavor_rates || '{}') : (row.flavor_rates || {})
-                        } catch {
-                          rates = {}
-                        }
                         const rate = rates[flv] || {}
                         const priceValue = isDefault ? row.selling_price : (rate.selling_price !== undefined ? rate.selling_price : '')
 
@@ -1149,7 +1146,8 @@ export default function AdminBulkProductAddPage() {
               </div>
             </Section>
           </div>
-        ))}
+        )
+      })}
       </div>
 
       <div className="card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/70 border border-gray-150 shadow-lifted">
@@ -1325,7 +1323,7 @@ export default function AdminBulkProductAddPage() {
                   setShowFlavorManager(false)
                   setNewFlavor('')
                 }}
-                className="text-gray-400 hover:text-gray-650 text-sm font-medium"
+                className="text-gray-400 hover:text-gray-600 text-sm font-medium"
               >
                 Close
               </button>
@@ -1360,7 +1358,7 @@ export default function AdminBulkProductAddPage() {
                   <button
                     type="button"
                     onClick={() => handleDeleteFlavor(flv)}
-                    className="text-red-400 hover:text-red-655 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                    className="text-red-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 size={15} />
                   </button>
@@ -1382,7 +1380,7 @@ export default function AdminBulkProductAddPage() {
                   setShowShapeManager(false)
                   setNewShape('')
                 }}
-                className="text-gray-400 hover:text-gray-650 text-sm font-medium"
+                className="text-gray-400 hover:text-gray-600 text-sm font-medium"
               >
                 Close
               </button>
@@ -1417,7 +1415,7 @@ export default function AdminBulkProductAddPage() {
                   <button
                     type="button"
                     onClick={() => handleDeleteShape(shp)}
-                    className="text-red-400 hover:text-red-655 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                    className="text-red-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <Trash2 size={15} />
                   </button>

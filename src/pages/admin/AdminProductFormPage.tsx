@@ -760,7 +760,7 @@ export default function AdminProductFormPage() {
                         }
                         delete rates[nextDefault]
 
-                        const remaining = selectedFlavors.filter((f: string) => f !== nextDefault)
+                        const remaining = selectedFlavors.filter((f) => f !== nextDefault)
                         const nextFlavors = [nextDefault, ...remaining]
 
                         setForm((oldForm: any) => ({
@@ -771,7 +771,7 @@ export default function AdminProductFormPage() {
                         }))
                       }}
                     >
-                      {selectedFlavors.map((flv: string) => (
+                      {selectedFlavors.map((flv) => (
                         <option key={flv} value={flv}>
                           {flv}
                         </option>
@@ -781,7 +781,7 @@ export default function AdminProductFormPage() {
                 </div>
 
                 <div className="space-y-3.5">
-                  {selectedFlavors.map((flv: string, idx: number) => {
+                  {selectedFlavors.map((flv, idx) => {
                     const isDefault = idx === 0
                     let rates: any = {}
                     try {
