@@ -269,7 +269,8 @@ export default function AdminBulkProductAddPage() {
         images: [],
         localFiles: [],
         addWeightKg: 0,
-        addWeightG: 500
+        addWeightG: 500,
+        flavor_rates: '{}'
       }
     ])
   }
