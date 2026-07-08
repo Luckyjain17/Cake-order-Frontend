@@ -560,9 +560,9 @@ export default function AdminProductFormPage() {
         {/* Category & Type */}
         <Section title="Cake Details">
           <Field label="Category">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2">
               <select
-                className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-white"
+                className="input flex-1 min-w-0 appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-white"
                 value={form.category_id}
                 onChange={set('category_id')}
               >
@@ -599,8 +599,8 @@ export default function AdminProductFormPage() {
                   )
                 })}
               </div>
-              <div className="flex justify-between items-center">
-                <p className="text-xs text-gray-400 font-semibold truncate max-w-[70%]">
+              <div className="flex justify-between items-center gap-2">
+                <p className="text-xs text-gray-400 font-semibold truncate flex-1 min-w-0" title={selectedFlavors.join(', ')}>
                   Selected: {selectedFlavors.length > 0 ? selectedFlavors.join(', ') : 'None'}
                 </p>
                 <button
@@ -628,8 +628,8 @@ export default function AdminProductFormPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex justify-between items-center">
-                <p className="text-xs text-gray-400 font-semibold truncate max-w-[70%]">
+              <div className="flex justify-between items-center gap-2">
+                <p className="text-xs text-gray-400 font-semibold truncate flex-1 min-w-0" title={form.shape || 'None'}>
                   Selected Shape: {form.shape || 'None'}
                 </p>
                 <button
@@ -644,7 +644,7 @@ export default function AdminProductFormPage() {
           </Field>
           <Field label="Weight Options">
             {/* Add weight row */}
-            <div className="flex gap-2 items-center mb-3">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center mb-3">
               <select
                 className="input font-semibold flex-1 text-sm"
                 value={addWeightKg}
@@ -794,7 +794,7 @@ export default function AdminProductFormPage() {
 
                     return (
                       <div key={flv} className="flex items-center gap-3">
-                        <span className="font-bold text-sm text-gray-700 w-1/3 truncate">
+                        <span className="font-bold text-sm text-gray-700 w-1/3 inline-block truncate flex-shrink-0" title={flv}>
                           🍰 {flv} {isDefault && <span className="text-xs text-primary-500 font-normal ml-1">(Default)</span>}
                         </span>
                         <div className="flex-1">

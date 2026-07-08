@@ -55,6 +55,7 @@ export default function AdminManualOrderPage() {
           const unitPrice = o.quantity > 0 ? Math.round(o.amount / o.quantity) : o.amount
           setForm({
             ...o,
+            mobile_number: o.mobile_number === 'WhatsApp' ? '0' : o.mobile_number,
             _unit_price: String(unitPrice),
             quantity: String(o.quantity),
             amount: String(o.amount),
@@ -161,7 +162,7 @@ export default function AdminManualOrderPage() {
 
           <div>
             <label className="label">Weight</label>
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center">
               {/* KG dropdown */}
               <select
                 className="input font-semibold flex-1"

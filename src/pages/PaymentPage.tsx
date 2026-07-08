@@ -10,8 +10,13 @@ const QR_CODE_URL = import.meta.env.VITE_QR_CODE_URL || ''
 
 function buildWhatsAppMessage(order: any, form: any) {
   const items = (order.items || [])
-    .map((i: any) => `• *${i.name}* x ${i.qty} (${i.weight || 'Standard'})\n  🔗 Link: ${window.location.origin}/product/${i.product_id}`)
-    .join('\n')
+    .map((i: any) => 
+      `• *${i.name}* (Qty: ${i.qty})\n` +
+      `  ⚖️ Weight: ${i.weight || 'Standard'}\n` +
+      `  🍰 Flavor: ${i.flavor || 'None'}\n` +
+      `  🆔 Product ID: ${i.product_id}`
+    )
+    .join('\n\n')
   return encodeURIComponent(
     `🎂 *New Cake Order — ${order.order_number}*\n\n` +
     `*Customer:* ${form?.customer_name}\n` +
@@ -86,17 +91,9 @@ export default function PaymentPage() {
   }
 
   // QR Code flow
-  const handlePaymentSuccess = async () => {
-    setIsProcessing(true)
-    try {
-      await api.patch(`/orders/admin/${order?.id}`, { payment_status: 'paid' })
-      setPaymentStatus('success')
-      window.open(waUrl, '_blank')
-    } catch {
-      toast.error('Failed to update payment status')
-    } finally {
-      setIsProcessing(false)
-    }
+  const handlePaymentSuccess = () => {
+    setPaymentStatus('success')
+    window.open(waUrl, '_blank')
   }
 
   const handlePaymentFailed = () => {

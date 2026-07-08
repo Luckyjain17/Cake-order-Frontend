@@ -73,7 +73,7 @@ export default function CheckoutPage() {
       // Auto-submit order with default pickup info so it's logged in the admin panel
       const { data } = await api.post('/orders/', {
         customer_name: 'WhatsApp Customer',
-        mobile_number: 'WhatsApp',
+        mobile_number: '0',
         delivery_address: 'Self-Pickup',
         landmark: '',
         delivery_date: '',
@@ -95,10 +95,15 @@ export default function CheckoutPage() {
         order_source: 'website',
       })
 
-      // Generate a clean summary message with direct product page links (using ID for uniqueness)
+      // Generate a clean summary message with Product ID and Flavor details (no link)
       const itemsList = items
-        .map((item) => `• *${item.name}* x ${item.qty} (${item.weight || 'Standard'}${item.flavor ? ` - Flavor: ${item.flavor}` : ''})\n  🔗 Link: ${window.location.origin}/product/${item.product_id}`)
-        .join('\n')
+        .map((item) => 
+          `• *${item.name}* (Qty: ${item.qty})\n` +
+          `  ⚖️ Weight: ${item.weight || 'Standard'}\n` +
+          `  🍰 Flavor: ${item.flavor || 'None'}\n` +
+          `  🆔 Product ID: ${item.product_id}`
+        )
+        .join('\n\n')
 
       const waMsg = `Hello! I would like to place an order:\n\n📋 *Order ID:* #${data.order_number}\n🛍️ *Items:* \n${itemsList}\n\n💰 *Total Amount:* ₹${totalAmount}\n\nPlease confirm my order. Thank you!`
 
@@ -128,7 +133,7 @@ export default function CheckoutPage() {
       // Auto-submit order with default pickup info so it's logged in the admin panel
       const { data } = await api.post('/orders/', {
         customer_name: 'WhatsApp Customer',
-        mobile_number: 'WhatsApp',
+        mobile_number: '0',
         delivery_address: 'Self-Pickup',
         landmark: '',
         delivery_date: '',
@@ -158,7 +163,7 @@ export default function CheckoutPage() {
           paymentMethod: 'qr_code',
           form: {
             customer_name: 'WhatsApp Customer',
-            mobile_number: 'WhatsApp',
+            mobile_number: '0',
             delivery_address: 'Self-Pickup',
           }
         }

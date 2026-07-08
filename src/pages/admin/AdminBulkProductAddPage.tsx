@@ -713,7 +713,7 @@ export default function AdminBulkProductAddPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          <div className="flex flex-wrap gap-1.5 border-r border-gray-200 pr-2 mr-2">
+          <div className="flex flex-wrap gap-1.5 sm:border-r sm:border-gray-200 border-none sm:pr-2 sm:mr-2">
             <button
               onClick={() => setShowCategoryManager(true)}
               className="btn-secondary py-2 px-3 text-xs flex items-center gap-1.5 font-semibold text-gray-700 bg-gray-55 border border-gray-250 hover:bg-gray-100"
@@ -820,9 +820,9 @@ export default function AdminBulkProductAddPage() {
 
             <Section title="Cake Details">
               <Field label="Category">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap sm:flex-nowrap gap-2">
                   <select
-                    className="input appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-white"
+                    className="input flex-1 min-w-0 appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M7%209l3%203%203-3%22%20stroke%3D%22%25236b7280%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10 bg-white"
                     value={row.category_id}
                     onChange={(e) => updateRow(row.id, 'category_id', e.target.value)}
                   >
@@ -864,8 +864,8 @@ export default function AdminBulkProductAddPage() {
                       )
                     })}
                   </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-gray-400 font-semibold truncate max-w-[70%]">
+                  <div className="flex justify-between items-center gap-2">
+                    <p className="text-xs text-gray-400 font-semibold truncate flex-1 min-w-0" title={row.flavor || 'None'}>
                       Selected: {row.flavor || 'None'}
                     </p>
                     <button
@@ -895,8 +895,8 @@ export default function AdminBulkProductAddPage() {
                       </button>
                     ))}
                   </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-gray-400 font-semibold truncate max-w-[70%]">
+                  <div className="flex justify-between items-center gap-2">
+                    <p className="text-xs text-gray-400 font-semibold truncate flex-1 min-w-0" title={row.shape || 'None'}>
                       Selected Shape: {row.shape || 'None'}
                     </p>
                     <button
@@ -912,7 +912,7 @@ export default function AdminBulkProductAddPage() {
             </Section>
 
             <Section title="Weight Options">
-              <div className="flex gap-2 items-center mb-3">
+              <div className="flex flex-wrap sm:flex-nowrap gap-2 items-center mb-3">
                 <select
                   className="input font-semibold flex-1 text-sm bg-white"
                   value={row.addWeightKg}
@@ -1054,7 +1054,7 @@ export default function AdminBulkProductAddPage() {
 
                         return (
                           <div key={flv} className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-gray-600 w-24 truncate">
+                            <span className="text-xs font-bold text-gray-600 w-24 inline-block truncate flex-shrink-0" title={flv}>
                               🍰 {flv} {isDefault && <span className="text-[10px] text-primary-500 font-normal ml-0.5">(Def)</span>}
                             </span>
                             <input
