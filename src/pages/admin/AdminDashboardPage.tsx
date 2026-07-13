@@ -42,10 +42,9 @@ export default function AdminDashboardPage() {
     queryFn: () =>
       api.get('/orders/manual/all', {
         params: {
-          page: 1,
-          per_page: 1000,
           start_date: startDate,
           end_date: endDate,
+          all: true,
         },
       }).then((r) => r.data),
     staleTime: 0,
@@ -143,10 +142,20 @@ export default function AdminDashboardPage() {
     return dates
   }
 
+  const getOrderDate = (order: any): string => {
+    if (order.delivery_date && order.delivery_date.trim() !== '') {
+      return order.delivery_date
+    }
+    if (order.created_at) {
+      return order.created_at.substring(0, 10)
+    }
+    return ''
+  }
+
   // Chart data per day
   const chartData = getDatesInRange(startDate, endDate).map((d) => {
     const ordersOnDate = dateOrders.filter(
-      (o: any) => o.delivery_date === d || (o.created_at && o.created_at.startsWith(d))
+      (o: any) => getOrderDate(o) === d
     )
     const paid = ordersOnDate.reduce((s: number, o: any) => s + getPaidAmount(o), 0)
     const pending = ordersOnDate.reduce((s: number, o: any) => s + getPendingAmount(o), 0)
