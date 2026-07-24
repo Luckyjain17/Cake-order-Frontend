@@ -163,15 +163,28 @@ export default function AdminDashboardPage() {
     return { date: `${parts[2]}/${parts[1]}`, Paid: paid, Pending: pending }
   })
 
+  // Calculate max value of visible data to keep Y-axes synchronized
+  const maxVisibleValue = Math.max(
+    ...chartData.map((d) => {
+      let val = 0
+      if (visibleLines.Paid) val = Math.max(val, d.Paid)
+      if (visibleLines.Pending) val = Math.max(val, d.Pending)
+      return val
+    }),
+    0
+  )
+
   // Auto-scroll to latest
   useEffect(() => {
-    const t = setTimeout(() => {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth
-      }
-    }, 100)
-    return () => clearTimeout(t)
-  }, [chartData.length])
+    if (!loadStats && !loadOrders) {
+      const t = setTimeout(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth
+        }
+      }, 100)
+      return () => clearTimeout(t)
+    }
+  }, [chartData.length, loadStats, loadOrders])
 
   if (loadStats || loadOrders) {
     return (
@@ -293,9 +306,10 @@ export default function AdminDashboardPage() {
                   axisLine={false}
                   tickFormatter={(v) => `₹${v}`}
                   width={52}
+                  domain={[0, maxVisibleValue === 0 ? 1000 : 'auto']}
                 />
-                <Line dataKey="Paid" stroke="transparent" dot={false} legendType="none" />
-                <Line dataKey="Pending" stroke="transparent" dot={false} legendType="none" />
+                {visibleLines.Paid && <Line dataKey="Paid" stroke="transparent" dot={false} legendType="none" />}
+                {visibleLines.Pending && <Line dataKey="Pending" stroke="transparent" dot={false} legendType="none" />}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -313,7 +327,7 @@ export default function AdminDashboardPage() {
                     tickLine={false}
                     axisLine={false}
                   />
-                  <YAxis hide />
+                  <YAxis hide domain={[0, maxVisibleValue === 0 ? 1000 : 'auto']} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#fff',
